@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import static jakarta.persistence.GenerationType.AUTO;
 
 @Entity(name = "User")
-@Table(name = "customer")
+@Table(name = "app_user")
 @Data
 @Builder
 @NoArgsConstructor
@@ -47,6 +47,8 @@ public class User {
             columnDefinition = "TEXT"
     )
     private String password;
+
+    private boolean online;
 
     public User(String name) {
         this.name = name;
