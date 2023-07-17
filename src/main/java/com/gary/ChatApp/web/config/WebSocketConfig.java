@@ -11,7 +11,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 
-    //This method registers a STOMP (Simple Text Oriented Messaging Protocol) endpoint /ws for clients to connect to.
+    //This method registers a STOMP (Simple Text Oriented Messaging Protocol) endpoint /ws for clients to connect to.x
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").withSockJS();  //with sockjs enables fallback options for
