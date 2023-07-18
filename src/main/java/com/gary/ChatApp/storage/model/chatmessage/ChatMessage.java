@@ -7,16 +7,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
+
 import static jakarta.persistence.GenerationType.AUTO;
 
 @Data
 @NoArgsConstructor
 @Builder
-@AllArgsConstructor
 @RedisHash("message")
 @Entity(name = "message")
 @Table(name = "message")
-public class ChatMessage {
+public class ChatMessage implements Serializable {
 
     @Id
     @SequenceGenerator(
@@ -50,5 +51,10 @@ public class ChatMessage {
     )
     private String sender; //maybe jpa ti davukavshiro users
 
-    //private MessageType messageType;
+    public ChatMessage(Long id,String content, String sender) {
+        this.id = id;
+        this.content = content;
+        this.sender = sender;
+    }
+//private MessageType messageType;
 }
