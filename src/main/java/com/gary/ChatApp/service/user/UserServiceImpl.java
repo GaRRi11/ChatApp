@@ -3,6 +3,7 @@ package com.gary.ChatApp.service.user;
 import com.gary.ChatApp.storage.model.user.User;
 import com.gary.ChatApp.storage.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    @Autowired
     private final UserRepository userRepository;
 
     public User save (User user){

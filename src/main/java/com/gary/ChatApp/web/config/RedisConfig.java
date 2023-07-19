@@ -1,10 +1,11 @@
-package com.gary.ChatApp.web.security;
+package com.gary.ChatApp.web.config;
 
 import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -16,6 +17,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 @Configuration
+@EnableRedisRepositories
+@EnableJpaRepositories
 public class RedisConfig {
 
     @Value("${spring.data.redis.host}")
@@ -23,14 +26,6 @@ public class RedisConfig {
 
     @Value("${spring.data.redis.port}")
     private int redisPort;
-
-//    @Bean
-//    public JedisConnectionFactory jedisConnectionFactory(){
-//        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
-//        configuration.setHostName(redisHost);
-//        configuration.setPort(redisPort);
-//        return new JedisConnectionFactory(configuration);
-//    }
 
     @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
