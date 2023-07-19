@@ -2,14 +2,13 @@ package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.service.chatMessage.ChatMessageService;
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
+import com.gary.ChatApp.storage.repository.chatMessage.MessageRepository;
 import com.gary.ChatApp.web.dto.ChatMessageDTOMapper;
 import com.gary.ChatApp.web.dto.ChatMessageRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,21 +20,31 @@ import java.util.List;
 @Controller
 @RequestMapping("/chat")
 @RequiredArgsConstructor
+@EnableCaching
 public class ChatController {
 
     private final ChatMessageService chatMessageService;
     private final ChatMessageDTOMapper chatMessageDTOMapper;
 
+    private final MessageRepository messageRepository;
 
     @PostMapping("/send")
     public ResponseEntity<String> save(@RequestBody ChatMessageRequest chatMessageRequest){
-        chatMessageService.save(chatMessageDTOMapper.fromDTO(chatMessageRequest));
+//        chatMessageService.save(chatMessageDTOMapper.fromDTO(chatMessageRequest));
+//        secondJPA.save(chatMessageDTOMapper.fromDTO(chatMessageRequest));
         return ResponseEntity.ok("Message Sent");
     }
 
     @GetMapping("/all")
-    public List<ChatMessage> getAll (){
-        return chatMessageService.getAll();
+    @Cacheable(cacheNames = "allChatMessages")
+    public ResponseEntity<List<ChatMessage>> getAll (){
+//        return ResponseEntity.ok(chatMessageService.getAll() );
+        return ResponseEntity.ok(messageRepository.findAll());
+    }
+
+    @GetMapping("/hi")
+    public ResponseEntity<String> hi (){
+        return ResponseEntity.ok("hi");
     }
 
 
