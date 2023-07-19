@@ -1,9 +1,8 @@
 package com.gary.ChatApp.service.chatMessage;
 
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
-//import com.gary.ChatApp.storage.repository.chatMessage.ChatMessageRepository;
-import com.gary.ChatApp.storage.repository.chatMessage.ChatMessageRepository;
-import com.gary.ChatApp.storage.repository.chatMessage.RedisChatMessageRepository;
+import com.gary.ChatApp.storage.repository.jpa.ChatMessageRepository;
+import com.gary.ChatApp.storage.repository.redis.RedisChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

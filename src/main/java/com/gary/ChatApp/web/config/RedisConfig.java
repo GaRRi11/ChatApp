@@ -17,8 +17,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 @Configuration
-@EnableRedisRepositories
-@EnableJpaRepositories
+//@EnableRedisRepositories
+//@EnableJpaRepositories
 public class RedisConfig {
 
     @Value("${spring.data.redis.host}")
@@ -30,8 +30,6 @@ public class RedisConfig {
     @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration(redisHost, redisPort);
-        // Add other Redis configuration properties if needed (e.g., password, SSL, etc.)
-
         return new LettuceConnectionFactory(redisConfig);
     }
     @Bean

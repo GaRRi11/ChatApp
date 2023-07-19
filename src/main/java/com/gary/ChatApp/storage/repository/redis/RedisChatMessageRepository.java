@@ -1,4 +1,4 @@
-package com.gary.ChatApp.storage.repository.chatMessage;
+package com.gary.ChatApp.storage.repository.redis;
 
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +16,10 @@ public class RedisChatMessageRepository {
     @Autowired
     public RedisChatMessageRepository(@Qualifier("myRedisTemplate") RedisTemplate redisTemplate) {
         this.template = redisTemplate;
-        // Constructor implementation
     }
 
     public ChatMessage save (ChatMessage chatMessage){
-        template.opsForHash().put(HASH_KEY,chatMessage.getId(),chatMessage);
+        template.opsForHash().put(HASH_KEY,chatMessage.getId().toString(),chatMessage);
         return chatMessage;
     }
 
@@ -29,7 +28,7 @@ public class RedisChatMessageRepository {
     }
 
     public ChatMessage findById(Long id){
-        return (ChatMessage) template.opsForHash().get(HASH_KEY,id);
+        return (ChatMessage) template.opsForHash().get(HASH_KEY,id.toString());
     }
 
 }

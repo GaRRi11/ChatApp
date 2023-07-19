@@ -8,4 +8,6 @@ public interface ChatMessageService {
     ChatMessage save (ChatMessage chatMessage);
 
     List<ChatMessage> getAll();
+
+    ChatMessage findById(Long id);
 }

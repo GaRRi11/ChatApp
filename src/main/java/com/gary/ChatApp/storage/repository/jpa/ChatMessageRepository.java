@@ -1,4 +1,4 @@
-package com.gary.ChatApp.storage.repository.chatMessage;
+package com.gary.ChatApp.storage.repository.jpa;
 
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
 import org.springframework.context.annotation.Primary;
