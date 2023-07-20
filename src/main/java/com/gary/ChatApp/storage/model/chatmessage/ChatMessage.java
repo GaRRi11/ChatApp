@@ -5,25 +5,53 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
 
 import static jakarta.persistence.GenerationType.AUTO;
 
+
+@Entity(name = "ChatMessage")
+@Table(name = "chat_message")
 @Data
-@NoArgsConstructor
-@RedisHash("message")
 @Builder
-public class ChatMessage implements Serializable {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ChatMessage {
+    @Id
+    @SequenceGenerator(
+            name = "chat_message_sequence",
+            sequenceName = "chat_message_sequence",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = AUTO,
+            generator = "chat_message_sequence"
+    )
+    @Column(
+            name = "id",
+            updatable = false
+    )
     private Long id;
+
+
+    @Column(
+            name = "content",
+            updatable = false,
+            columnDefinition = "TEXT"
+    )
     private String content;
+
+    @Column(
+            name = "sender",
+            updatable = false,
+            columnDefinition = "TEXT"
+    )
     private String sender; //maybe jpa ti davukavshiro users
 
-    public ChatMessage(Long id,String content, String sender) {
-        this.id = id;
+    public ChatMessage(String content, String sender) {
         this.content = content;
         this.sender = sender;
     }
-//private MessageType messageType;
+    //private MessageType messageType;
 }

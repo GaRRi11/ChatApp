@@ -14,7 +14,6 @@ public class ChatMessageDTOMapper {
 
     public ChatMessage fromDTO(ChatMessageRequest chatMessageRequest){
         return new ChatMessage(
-                generateId(),
                 chatMessageRequest.getContent(),
                 chatMessageRequest.getSender()
         );

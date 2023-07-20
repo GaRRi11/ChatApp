@@ -1,8 +1,7 @@
 package com.gary.ChatApp.service.user;
 
 import com.gary.ChatApp.storage.model.user.User;
-import com.gary.ChatApp.storage.repository.jpa.UserRepository;
-import lombok.RequiredArgsConstructor;
+import com.gary.ChatApp.storage.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

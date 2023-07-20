@@ -1,4 +1,4 @@
-package com.gary.ChatApp.storage.repository.jpa;
+package com.gary.ChatApp.storage.repository;
 
 import com.gary.ChatApp.storage.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
