@@ -1,26 +1,23 @@
-//compackage com.gary.ChatApp.web.security;
+//package com.gary.ChatApp.web.security;
+//
 //
 //import lombok.RequiredArgsConstructor;
 //import org.springframework.context.annotation.Bean;
 //import org.springframework.context.annotation.Configuration;
 //import org.springframework.data.redis.core.RedisOperations;
 //import org.springframework.data.redis.core.RedisTemplate;
-//import org.springframework.security.config.annotation.SecurityConfigurer;
 //import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-//import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 //import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-//import org.springframework.security.config.http.SessionCreationPolicy;
-//import org.springframework.security.web.DefaultSecurityFilterChain;
-//import org.springframework.security.web.SecurityFilterChain;
-//import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 //import org.springframework.session.security.SpringSessionBackedSessionRegistry;
-//import org.springframework.session.data.redis.RedisSessionRepository
+//import org.springframework.session.data.redis.RedisSessionRepository;
 //@Configuration
 //@EnableWebSecurity
 //@EnableGlobalMethodSecurity(securedEnabled = true)
 //@RequiredArgsConstructor
 //public class SecurityConfig {
 //
+//}
+
 //    private RedisTemplate<String, Object> redisTemplate;
 //
 //    @Bean

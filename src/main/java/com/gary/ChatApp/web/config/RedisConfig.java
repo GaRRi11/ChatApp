@@ -39,10 +39,4 @@ public class RedisConfig {
         return template;
     }
 
-//    @Bean
-//    public JedisConnectionFactory redisConnectionFactory() {
-//        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration(redisHost, redisPort);
-//        return new JedisConnectionFactory(redisConfig);
-//    }
-
 }

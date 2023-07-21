@@ -9,10 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ChatAppApplication {
 
 	public static void main(String[] args) {
-//		ConfigurableApplicationContext context =
 		SpringApplication.run(ChatAppApplication.class, args);
-//		AppConfig beanInspector = context.getBean(AppConfig.class);
-//		beanInspector.printBeanNames();
 	}
 
 }

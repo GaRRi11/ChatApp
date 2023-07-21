@@ -9,14 +9,16 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ChatMessageServiceImpl implements ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
-    private static final String HASH_KEY = "message";
-
     private final RedisTemplate template;
+    private static final String HASH_KEY = "message";
+    private static final long EXPIRATION_TIME_SECONDS = 7200;
+
     @Autowired
     public ChatMessageServiceImpl(ChatMessageRepository chatMessageService, @Qualifier("myRedisTemplate") RedisTemplate redisTemplate) {
         this.chatMessageRepository = chatMessageService;
@@ -25,11 +27,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
     public ChatMessage save (ChatMessage chatMessage){
         chatMessageRepository.save(chatMessage);
-        String key = HASH_KEY + chatMessage.getId();
+        String key = HASH_KEY + ":" + chatMessage.getId();
         template.opsForHash().put(key,"content",chatMessage.getContent());
         template.opsForHash().put(key,"sender",chatMessage.getSender());
 
-       return chatMessage;
+        template.expire(key, EXPIRATION_TIME_SECONDS, TimeUnit.SECONDS);
+
+
+        return chatMessage;
     }
 
     public ChatMessage findById(Long id){
@@ -37,7 +42,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         if (template.opsForHash().hasKey(key, "content") && template.opsForHash().hasKey(key, "sender")) {
             String content = (String) template.opsForHash().get(key, "content");
             String sender = (String) template.opsForHash().get(key, "sender");
-            return new ChatMessage(id, content, sender);
+            return save(new ChatMessage(id, content, sender));
         } else {
             Optional<ChatMessage> chatMessageOptional = chatMessageRepository.findById(id);
             return chatMessageOptional.orElse(null); //da rame logika rodis waishalos redisidan
