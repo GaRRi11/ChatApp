@@ -26,14 +26,18 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     public ChatMessage save (ChatMessage chatMessage){
-        chatMessageRepository.save(chatMessage);
+        if (chatMessageRepository.findById(chatMessage.getId()).isEmpty()){
+            chatMessageRepository.save(chatMessage);
+        }
+        saveInRedis(chatMessage);
+        return chatMessage;
+    }
+
+    public ChatMessage saveInRedis(ChatMessage chatMessage){
         String key = HASH_KEY + ":" + chatMessage.getId();
         template.opsForHash().put(key,"content",chatMessage.getContent());
         template.opsForHash().put(key,"sender",chatMessage.getSender());
-
         template.expire(key, EXPIRATION_TIME_SECONDS, TimeUnit.SECONDS);
-
-
         return chatMessage;
     }
 
@@ -42,10 +46,10 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         if (template.opsForHash().hasKey(key, "content") && template.opsForHash().hasKey(key, "sender")) {
             String content = (String) template.opsForHash().get(key, "content");
             String sender = (String) template.opsForHash().get(key, "sender");
-            return save(new ChatMessage(id, content, sender));
+            return saveInRedis(new ChatMessage(id, content, sender));
         } else {
             Optional<ChatMessage> chatMessageOptional = chatMessageRepository.findById(id);
-            return chatMessageOptional.orElse(null); //da rame logika rodis waishalos redisidan
+            return chatMessageOptional.orElse(null);
         }
     }
 

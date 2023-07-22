@@ -17,7 +17,7 @@
 //public class SecurityConfig {
 //
 //}
-
+//
 //    private RedisTemplate<String, Object> redisTemplate;
 //
 //    @Bean

@@ -4,15 +4,15 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
+@Component
 @RequiredArgsConstructor
 public class SessionManager {
 
-    private static final String SESSION_COOKIE_NAME = "sessionId";
+    public static final String SESSION_COOKIE_NAME = "sessionId";
 
     private final RedisTemplate template;
 
@@ -21,18 +21,23 @@ public class SessionManager {
         return UUID.randomUUID().toString();
     }
 
-    public void createSession(String userId, HttpServletResponse response){
+    public void createSession(Long userId,HttpServletResponse response){
         String sessionId = generateSessionId();
-        String sessionData = "{\"userId\":\"" + userId + "\",\"otherData\":\"value\"}"; //expiration davamato
-        Map<String, Object> sessionAttributes = new HashMap<>();
-        sessionAttributes.put("userId", userId);
-//        sessionAttributes.put("username", session.getUsername());
-//        sessionAttributes.put("otherData", session.getOtherData());
-
-        template.opsForHash().putAll(sessionId, sessionAttributes);
+        String sessionKey = getSessionKey(sessionId);
+        template.opsForValue().set(sessionKey,userId);
         Cookie sessionCookie = new Cookie(SESSION_COOKIE_NAME, sessionId);
-        sessionCookie.setMaxAge(1);
+        sessionCookie.setMaxAge(3600);
         sessionCookie.setHttpOnly(true);
-        response.addCookie(sessionCookie);}
+        response.addCookie(sessionCookie);
+    }
+
+    public Long getUserIdFromSession(String sessionId) {
+        String sessionKey = getSessionKey(sessionId);
+        return (Long) template.opsForValue().get(sessionKey);
+    }
+
+    private String getSessionKey(String sessionId) {
+        return "session:" + sessionId;
+    }
 
 }
