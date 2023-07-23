@@ -3,9 +3,12 @@ package com.gary.ChatApp.web.controller;
 import com.gary.ChatApp.service.user.UserService;
 import com.gary.ChatApp.web.dto.UserDTOMapper;
 import com.gary.ChatApp.web.dto.UserRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -17,23 +20,38 @@ public class AuthController {
     private final UserDTOMapper userDTOMapper;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register (@RequestBody UserRequest userRequest){
+    public ModelAndView register (@RequestBody UserRequest userRequest, HttpServletResponse response){
 
         if (userRequest.getName() == null){
             throw new NullPointerException("The request was malformed or missing required fields");
         }
 
         if (userService.findByName(userRequest.getName()).isPresent()){
-            return ResponseEntity.badRequest().body("Username already exists");
+            throw new IllegalArgumentException("Username already exists");
         }
 
-        userService.save(userDTOMapper.fromDTO(userRequest));
+        userService.save(userDTOMapper.fromDTO(userRequest),response);
 
-        return ResponseEntity.ok("User registered successfully");
+        return new ModelAndView("redirect:/chat/all");
     }
 
-    @GetMapping("/login")
-    public ResponseEntity<String> hi(){
-        return ResponseEntity.ok("hi");
+    @PostMapping("/auth/login")
+    public ModelAndView authenticate(@RequestBody UserRequest request,HttpServletResponse response) {
+        if (
+                request.getName() == null ||
+                        request.getPassword() == null
+        ) {
+            throw new NullPointerException("The request was malformed or missing required fields");
+        }
+        userService.authenticate(request,response);
+        return new ModelAndView("redirect:/chat/all");
+
     }
+
+    @GetMapping("/logout")
+    public ModelAndView logout(HttpServletRequest request,HttpServletResponse response) {
+        userService.logout(request,response);
+        return new ModelAndView("redirect:/login");
+    }
+
 }

@@ -14,7 +14,7 @@ public class UserAuthenticationManager {
 
     public boolean authenticate (String username, String password){
         User user = userRepository.findByName(username).orElseThrow(
-                () -> new IllegalArgumentException());
+                () -> new IllegalArgumentException("Username is incorrect"));
         return user.getPassword().equals(userPasswordEncoder.encode(password));
     }
 }
