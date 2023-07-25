@@ -35,7 +35,7 @@ public class AuthController {
         return new ModelAndView("redirect:/chat/all");
     }
 
-    @PostMapping("/auth/login")
+    @PostMapping("/login")
     public ModelAndView authenticate(@RequestBody UserRequest request,HttpServletResponse response) {
         if (
                 request.getName() == null ||

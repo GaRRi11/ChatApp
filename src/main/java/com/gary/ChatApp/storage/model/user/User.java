@@ -29,7 +29,8 @@ public class User {
     )
     @Column(
             name = "id",
-            updatable = false
+            updatable = false,
+            nullable = false
     )
     private Long id;
 

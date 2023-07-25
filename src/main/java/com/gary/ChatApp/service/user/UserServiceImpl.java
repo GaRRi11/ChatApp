@@ -23,8 +23,9 @@ public class UserServiceImpl implements UserService {
     private final UserAuthenticationManager userAuthenticationManager;
 
     public User save (User user,HttpServletResponse response){
+        userRepository.save(user);
         sessionManager.createSession(user.getId(),response);
-        return userRepository.save(user);
+        return user;
     }
 
     public void authenticate(UserRequest request,HttpServletResponse response){
