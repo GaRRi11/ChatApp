@@ -1,7 +1,7 @@
 # ChatApp
-Real-Time Chat Application
+This is a Real-Time Chatting Application. I use Spring WebSocket to send and receive messages without any delay. WebSocket event listener helps me to know when the user connected or disconnected to the server and use that info for chatting. I also use Redis for Session-based Authentication to save cookies. I implement cookie-building logic too. Another thing where I use Redis is saving messages temporarily in Redis in-memory db, It will help users load their messages faster from in-memory db and that will boost the performance of the Application.
 
-# Technologies used
+## Technologies used
 
 • [Java](https://www.java.com): Java programming language
 
