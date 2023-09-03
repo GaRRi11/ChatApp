@@ -6,16 +6,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChatMessageDTOMapper {
 
-    private static Long idCounter = 1L;
-
-    private Long generateId(){
-        return idCounter++;
-    }
-
-    public ChatMessage fromDTO(ChatMessageRequest chatMessageRequest){
+    public ChatMessage fromDTO(ChatMessageRequest chatMessageRequest, String sender){
         return new ChatMessage(
                 chatMessageRequest.getContent(),
-                chatMessageRequest.getSender()
+                sender
         );
-    }
+}
 }

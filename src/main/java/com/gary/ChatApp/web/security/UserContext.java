@@ -4,13 +4,13 @@ import com.gary.ChatApp.storage.model.user.User;
 
 public class UserContext {
 
-    private static  ThreadLocal<User> usernameThreads = new ThreadLocal<>();
+    private static  ThreadLocal<User> userThreads = new ThreadLocal<>();
 
     public static User getUser() {
-        return usernameThreads.get();
+        return userThreads.get();
     }
 
     public static void setUser(User user) {
-        usernameThreads.set(user);
+        userThreads.set(user);
     }
 }

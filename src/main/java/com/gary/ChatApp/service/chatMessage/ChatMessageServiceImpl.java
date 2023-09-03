@@ -26,9 +26,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     public ChatMessage save (ChatMessage chatMessage){
-        if (chatMessageRepository.findById(chatMessage.getId()).isEmpty()){
-            chatMessageRepository.save(chatMessage);
-        }
+        chatMessageRepository.save(chatMessage);
         saveInRedis(chatMessage);
         return chatMessage;
     }

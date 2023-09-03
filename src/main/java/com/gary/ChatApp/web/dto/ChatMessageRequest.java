@@ -4,9 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public class ChatMessageRequest {
-
     private String content;
-    private String sender;
+
+    public ChatMessageRequest(String content) {
+        this.content = content;
+    }
+
+    public ChatMessageRequest() {
+    }
 }

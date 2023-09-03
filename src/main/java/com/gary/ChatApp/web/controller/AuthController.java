@@ -6,6 +6,7 @@ import com.gary.ChatApp.web.dto.UserRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -20,7 +21,7 @@ public class AuthController {
     private final UserDTOMapper userDTOMapper;
 
     @PostMapping("/register")
-    public ModelAndView register (@RequestBody UserRequest userRequest, HttpServletResponse response){
+    public ResponseEntity<String> register (@RequestBody UserRequest userRequest){
 
         if (userRequest.getName() == null){
             throw new NullPointerException("The request was malformed or missing required fields");
@@ -30,13 +31,15 @@ public class AuthController {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        userService.save(userDTOMapper.fromDTO(userRequest),response);
+        userService.save(userDTOMapper.fromDTO(userRequest));
 
-        return new ModelAndView("redirect:/chat/all");
+//        return new ModelAndView("redirect:/auth/login");
+        return ResponseEntity.ok("registered");
+
     }
 
     @PostMapping("/login")
-    public ModelAndView authenticate(@RequestBody UserRequest request,HttpServletResponse response) {
+    public ResponseEntity<String> authenticate(@RequestBody UserRequest request,HttpServletResponse response) {
         if (
                 request.getName() == null ||
                         request.getPassword() == null
@@ -44,14 +47,17 @@ public class AuthController {
             throw new NullPointerException("The request was malformed or missing required fields");
         }
         userService.authenticate(request,response);
-        return new ModelAndView("redirect:/chat/all");
+//        return new ModelAndView("redirect:/chat/all");
+        return ResponseEntity.ok("logged in");
 
     }
 
     @GetMapping("/logout")
-    public ModelAndView logout(HttpServletRequest request,HttpServletResponse response) {
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
         userService.logout(request,response);
-        return new ModelAndView("redirect:/login");
+//        return new ModelAndView("redirect:/login");
+        return ResponseEntity.ok("logged out");
+
     }
 
 }

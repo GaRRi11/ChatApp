@@ -30,6 +30,15 @@ public class SessionAuthenticationFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
+
+        String requestURI = httpRequest.getRequestURI();
+
+        // Exclude /auth/register from authentication
+        if (requestURI.equals("/auth/register") || requestURI.equals("/auth/login")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         Cookie[] cookies = httpRequest.getCookies();
         if (cookies != null) {
             String sessionId = sessionManager.getSessionIdFromCookie(cookies);

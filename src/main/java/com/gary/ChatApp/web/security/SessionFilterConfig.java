@@ -18,7 +18,7 @@ public class SessionFilterConfig {
     public FilterRegistrationBean<Filter> filterRegistrationBean(){
         FilterRegistrationBean<Filter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new SessionAuthenticationFilter(sessionManager,userRepository));
-        filterRegistrationBean.addUrlPatterns("/chat/register");
+        filterRegistrationBean.addUrlPatterns("/chat/**");
         return filterRegistrationBean;
     }
 }

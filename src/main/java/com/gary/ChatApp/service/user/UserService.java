@@ -12,7 +12,7 @@ import java.util.Optional;
 @Service
 public interface UserService {
 
-    User save(User user, HttpServletResponse response);
+    User save(User user);
 
     Optional<User> findByName(String name);
 

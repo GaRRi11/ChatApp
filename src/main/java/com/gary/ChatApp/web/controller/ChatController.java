@@ -4,6 +4,7 @@ import com.gary.ChatApp.service.chatMessage.ChatMessageService;
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
 import com.gary.ChatApp.web.dto.ChatMessageDTOMapper;
 import com.gary.ChatApp.web.dto.ChatMessageRequest;
+import com.gary.ChatApp.web.security.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,7 +22,7 @@ public class ChatController {
 
     @PostMapping("/send")
     public ResponseEntity<String> save(@RequestBody ChatMessageRequest chatMessageRequest){
-        chatMessageService.save(chatMessageDTOMapper.fromDTO(chatMessageRequest));
+        chatMessageService.save(chatMessageDTOMapper.fromDTO(chatMessageRequest,UserContext.getUser().getName()));
         return ResponseEntity.ok("Message Sent");
     }
 
