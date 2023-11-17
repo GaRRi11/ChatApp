@@ -38,6 +38,11 @@ public class UserServiceImpl implements UserService {
         sessionManager.logout(request,response);
     }
 
+    @Override
+    public void setUserOnlineStatus(User user, boolean onlineStatus) {
+        user.setOnline(onlineStatus);
+    }
+
     public Optional<User> findByName (String name){
         return userRepository.findByName(name);
     }

@@ -1,4 +1,4 @@
-package com.gary.ChatApp.web.config;
+package com.gary.ChatApp.config;
 
 import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Value;

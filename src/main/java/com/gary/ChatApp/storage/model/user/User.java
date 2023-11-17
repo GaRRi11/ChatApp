@@ -51,7 +51,15 @@ public class User {
 
     private boolean online;
 
-    public User(String name,String password) {
+    public boolean isOnline() {
+        return online;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
+
+    public User(String name, String password) {
         this.name = name;
         this.password = password;
     }

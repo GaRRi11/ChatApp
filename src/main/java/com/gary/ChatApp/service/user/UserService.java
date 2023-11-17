@@ -20,5 +20,7 @@ public interface UserService {
 
     void logout (HttpServletRequest request, HttpServletResponse response);
 
+    void setUserOnlineStatus(User user, boolean onlineStatus);
+
     List<User> getAll();
 }

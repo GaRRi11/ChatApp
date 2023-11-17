@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 
 
 @RestController
@@ -21,13 +20,13 @@ public class AuthController {
     private final UserDTOMapper userDTOMapper;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register (@RequestBody UserRequest userRequest){
+    public ResponseEntity<String> register(@RequestBody UserRequest userRequest) {
 
-        if (userRequest.getName() == null){
+        if (userRequest.getName() == null) {
             throw new NullPointerException("The request was malformed or missing required fields");
         }
 
-        if (userService.findByName(userRequest.getName()).isPresent()){
+        if (userService.findByName(userRequest.getName()).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
 
@@ -39,14 +38,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> authenticate(@RequestBody UserRequest request,HttpServletResponse response) {
+    public ResponseEntity<String> authenticate(@RequestBody UserRequest request, HttpServletResponse response) {
         if (
                 request.getName() == null ||
                         request.getPassword() == null
         ) {
             throw new NullPointerException("The request was malformed or missing required fields");
         }
-        userService.authenticate(request,response);
+        userService.authenticate(request, response);
 //        return new ModelAndView("redirect:/chat/all");
         return ResponseEntity.ok("logged in");
 
@@ -54,7 +53,7 @@ public class AuthController {
 
     @GetMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        userService.logout(request,response);
+        userService.logout(request, response);
 //        return new ModelAndView("redirect:/login");
         return ResponseEntity.ok("logged out");
 

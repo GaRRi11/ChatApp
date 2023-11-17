@@ -47,7 +47,7 @@ public class ChatMessage {
             updatable = false,
             columnDefinition = "TEXT"
     )
-    private String sender; //maybe jpa ti davukavshiro users
+    private String sender; //maybe jpa ti davukavshiro users da usercontextit
 
     public ChatMessage(String content, String sender) {
         this.content = content;
