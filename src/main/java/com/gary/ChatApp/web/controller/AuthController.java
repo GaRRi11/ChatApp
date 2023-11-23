@@ -6,6 +6,7 @@ import com.gary.ChatApp.web.dto.UserRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final UserService userService;
@@ -31,8 +33,8 @@ public class AuthController {
         }
 
         userService.save(userDTOMapper.fromDTO(userRequest));
+        log.info("registered user: {}", userRequest.getName());
 
-//        return new ModelAndView("redirect:/auth/login");
         return ResponseEntity.ok("registered");
 
     }
@@ -46,17 +48,11 @@ public class AuthController {
             throw new NullPointerException("The request was malformed or missing required fields");
         }
         userService.authenticate(request, response);
-//        return new ModelAndView("redirect:/chat/all");
+        log.info("user logged: {}",request.getName());
         return ResponseEntity.ok("logged in");
 
     }
 
-    @GetMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        userService.logout(request, response);
-//        return new ModelAndView("redirect:/login");
-        return ResponseEntity.ok("logged out");
-
-    }
+    //logout happens from frontend
 
 }

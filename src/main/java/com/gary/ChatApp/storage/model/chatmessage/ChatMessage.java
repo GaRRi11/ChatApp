@@ -49,9 +49,17 @@ public class ChatMessage {
     )
     private String sender; //maybe jpa ti davukavshiro users da usercontextit
 
-    public ChatMessage(String content, String sender) {
+    @Column(
+            name = "receiver",
+            updatable = false,
+            columnDefinition = "TEXT"
+    )
+    private String receiver;
+
+    public ChatMessage(String content, String sender,String receiver) {
         this.content = content;
         this.sender = sender;
+        this.receiver = receiver;
     }
     //private MessageType messageType;
 }

@@ -6,10 +6,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChatMessageDTOMapper {
 
-    public ChatMessage fromDTO(ChatMessageRequest chatMessageRequest, String sender){
+    public ChatMessage fromDTO(ChatMessageRequest chatMessageRequest){
         return new ChatMessage(
                 chatMessageRequest.getContent(),
-                sender
+                chatMessageRequest.getSender(),
+                chatMessageRequest.getReceiver()
         );
 }
 }

@@ -16,11 +16,21 @@ public interface UserService {
 
     Optional<User> findByName(String name);
 
+    Optional<User> findById(Long Id);
+
+
     void authenticate(UserRequest request, HttpServletResponse response);
+
+    void addFriend(Long receiverId,Long senderId);
+
 
     void logout (HttpServletRequest request, HttpServletResponse response);
 
     void setUserOnlineStatus(User user, boolean onlineStatus);
 
+    void updateLastSeen();
+
     List<User> getAll();
+
+    List<User> getActiveUsers();
 }

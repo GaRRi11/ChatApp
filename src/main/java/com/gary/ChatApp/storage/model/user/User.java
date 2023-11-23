@@ -7,6 +7,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import static jakarta.persistence.GenerationType.AUTO;
 
 @Entity(name = "User")
@@ -49,7 +53,14 @@ public class User {
     )
     private String password;
 
+    private LocalDateTime lastSeen;
+
+
     private boolean online;
+
+    @ElementCollection
+    @CollectionTable(name = "friends")
+    private List<Long> friendsIdList = new ArrayList<>();
 
     public boolean isOnline() {
         return online;

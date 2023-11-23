@@ -22,5 +22,10 @@ public class UserController {
         return ResponseEntity.ok(userService.getAll());
     }
 
+    @GetMapping("all/actives")
+    public ResponseEntity<List<User>> getActiveUsers(){
+        return ResponseEntity.ok(userService.getActiveUsers());
+    }
+
 
 }

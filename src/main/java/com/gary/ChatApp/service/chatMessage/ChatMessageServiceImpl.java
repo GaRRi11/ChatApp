@@ -35,6 +35,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         String key = HASH_KEY + ":" + chatMessage.getId();
         template.opsForHash().put(key,"content",chatMessage.getContent());
         template.opsForHash().put(key,"sender",chatMessage.getSender());
+        template.opsForHash().put(key,"receiver",chatMessage.getReceiver());
         template.expire(key, EXPIRATION_TIME_SECONDS, TimeUnit.SECONDS);
         return chatMessage;
     }
@@ -44,7 +45,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         if (template.opsForHash().hasKey(key, "content") && template.opsForHash().hasKey(key, "sender")) {
             String content = (String) template.opsForHash().get(key, "content");
             String sender = (String) template.opsForHash().get(key, "sender");
-            return saveInRedis(new ChatMessage(id, content, sender));
+            String receiver = (String) template.opsForHash().get(key,"receiver");
+            return saveInRedis(new ChatMessage(id, content, sender,receiver));
         } else {
             Optional<ChatMessage> chatMessageOptional = chatMessageRepository.findById(id);
             return chatMessageOptional.orElse(null);

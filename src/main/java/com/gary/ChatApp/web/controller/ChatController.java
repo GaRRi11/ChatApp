@@ -7,6 +7,7 @@ import com.gary.ChatApp.web.dto.ChatMessageRequest;
 import com.gary.ChatApp.web.security.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -26,7 +27,8 @@ public class ChatController {
 
     @PostMapping("/send")
     public ResponseEntity<String> save(@RequestBody ChatMessageRequest chatMessageRequest){
-        chatMessageService.save(chatMessageDTOMapper.fromDTO(chatMessageRequest,UserContext.getUser().getName()));
+        chatMessageRequest.setSender(UserContext.getUser().getName());
+        chatMessageService.save(chatMessageDTOMapper.fromDTO(chatMessageRequest));
         return ResponseEntity.ok("Message Sent");
     }
 
@@ -53,6 +55,13 @@ public class ChatController {
             @Payload ChatMessage chatMessage,
             SimpMessageHeaderAccessor headerAccessor){
         headerAccessor.getSessionAttributes().put("username",chatMessage.getSender());
+        return chatMessage;
+    }
+
+    @MessageMapping("/chat/{friendId}")
+    @SendTo("/topic/chat/{friendId}")
+    public ChatMessage sendMessage(@Payload ChatMessage chatMessage, @DestinationVariable("friendId") String friendId) {
+        // Save message to database or perform necessary actions
         return chatMessage;
     }
 

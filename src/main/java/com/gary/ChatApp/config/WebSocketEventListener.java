@@ -43,6 +43,7 @@ public class WebSocketEventListener {
         String username = (String) headerAccessor.getSessionAttributes().get("username");
         if (username != null) {
             log.info("User connected: {}", username);
+            log.info("Active Users: {}", userService.getActiveUsers());
             updateUserOnlineStatus(username, true);
         }
     }
@@ -53,6 +54,7 @@ public class WebSocketEventListener {
         String username = (String) headerAccessor.getSessionAttributes().get("username");
         if (username != null) {
             log.info("User disconnected: {}", username);
+            log.info("Active Users: {}", userService.getActiveUsers());
             updateUserOnlineStatus(username, false);
         }
     }
