@@ -14,7 +14,11 @@ public interface FriendRequestService {
 
     FriendRequest declineFriendRequest(FriendRequest friendRequest);
 
+    FriendRequest unfriend(FriendRequest friendRequest);
+
     boolean checkIfExists(FriendRequest friendRequest);
+
+    boolean checkFriendStatus(Long senderId, Long receiverId);
 
     Optional<FriendRequest> findById(Long id);
 

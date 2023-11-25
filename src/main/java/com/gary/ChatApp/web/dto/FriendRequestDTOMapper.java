@@ -5,10 +5,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class FriendRequestDTOMapper {
-    public FriendRequest fromDTO(FriendRequestDTO friendRequestDTO){
+    public FriendRequest fromDTO(Long senderId, Long receiverId){
         return new FriendRequest(
-                friendRequestDTO.getSenderId(),
-                friendRequestDTO.getReceiverId()
+                senderId,
+                receiverId
         );
     }
 }

@@ -23,6 +23,8 @@ public interface UserService {
 
     void addFriend(Long receiverId,Long senderId);
 
+    void deleteFriend(Long receiverId,Long senderId);
+
 
     void logout (HttpServletRequest request, HttpServletResponse response);
 

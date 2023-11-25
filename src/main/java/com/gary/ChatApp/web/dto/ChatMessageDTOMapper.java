@@ -1,16 +1,17 @@
 package com.gary.ChatApp.web.dto;
 
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ChatMessageDTOMapper {
 
-    public ChatMessage fromDTO(ChatMessageRequest chatMessageRequest){
+    public ChatMessage fromDTO(String content,Long senderId,Long receiverId){
         return new ChatMessage(
-                chatMessageRequest.getContent(),
-                chatMessageRequest.getSender(),
-                chatMessageRequest.getReceiver()
+                content,
+                senderId,
+                receiverId
         );
 }
 }

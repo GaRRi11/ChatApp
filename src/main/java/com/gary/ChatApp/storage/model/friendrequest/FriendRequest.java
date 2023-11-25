@@ -12,7 +12,6 @@ import static jakarta.persistence.GenerationType.AUTO;
 @Entity(name = "FriendRequest")
 @Table(name = "chat_message")
 @Data
-@Builder
 @NoArgsConstructor
 public class FriendRequest {
 

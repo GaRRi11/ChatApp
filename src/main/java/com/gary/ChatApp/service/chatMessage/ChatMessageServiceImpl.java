@@ -13,43 +13,36 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class ChatMessageServiceImpl implements ChatMessageService {
-
     private final ChatMessageRepository chatMessageRepository;
-    private final RedisTemplate template;
-    private static final String HASH_KEY = "message";
-    private static final long EXPIRATION_TIME_SECONDS = 7200;
+    private final RedisDB redisDB;
 
     @Autowired
-    public ChatMessageServiceImpl(ChatMessageRepository chatMessageService, @Qualifier("myRedisTemplate") RedisTemplate redisTemplate) {
+    public ChatMessageServiceImpl(ChatMessageRepository chatMessageService,
+                                  RedisDB redisDB) {
         this.chatMessageRepository = chatMessageService;
-        this.template = redisTemplate;
+        this.redisDB = redisDB;
     }
 
     public ChatMessage save (ChatMessage chatMessage){
         chatMessageRepository.save(chatMessage);
-        saveInRedis(chatMessage);
+        redisDB.cacheOneMessageInRedis(chatMessage);
         return chatMessage;
     }
 
-    public ChatMessage saveInRedis(ChatMessage chatMessage){
-        String key = HASH_KEY + ":" + chatMessage.getId();
-        template.opsForHash().put(key,"content",chatMessage.getContent());
-        template.opsForHash().put(key,"sender",chatMessage.getSender());
-        template.opsForHash().put(key,"receiver",chatMessage.getReceiver());
-        template.expire(key, EXPIRATION_TIME_SECONDS, TimeUnit.SECONDS);
-        return chatMessage;
-    }
+    public List<ChatMessage> getChatMessagesBetweenTwoUsers(Long senderId,Long receiverId){
+        // Check Redis for cached messages
+        List<ChatMessage> cachedMessages = redisDB.getChatMessagesBetweenTwoUsersFromRedis(senderId, receiverId);
 
-    public ChatMessage findById(Long id){
-        String key = "message:" + id;
-        if (template.opsForHash().hasKey(key, "content") && template.opsForHash().hasKey(key, "sender")) {
-            String content = (String) template.opsForHash().get(key, "content");
-            String sender = (String) template.opsForHash().get(key, "sender");
-            String receiver = (String) template.opsForHash().get(key,"receiver");
-            return saveInRedis(new ChatMessage(id, content, sender,receiver));
+        if (cachedMessages != null && !cachedMessages.isEmpty()) {
+            return cachedMessages; // Return messages from cache if found
         } else {
-            Optional<ChatMessage> chatMessageOptional = chatMessageRepository.findById(id);
-            return chatMessageOptional.orElse(null);
+            // Fetch messages from primary database
+            List<ChatMessage> messagesFromDb = chatMessageRepository.findBySenderAndReceiver(senderId, receiverId);
+
+            // Cache messages in Redis
+            redisDB.cacheMessagesInRedis(messagesFromDb);
+
+            return messagesFromDb;
         }
     }
 
@@ -57,6 +50,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Override
     public List<ChatMessage> getAll() {
         return chatMessageRepository.findAll();
+    }
+
+    @Override
+    public ChatMessage findById(Long id) {
+        if (redisDB.findByIdFromRedis(id).isPresent()){
+            return redisDB.findByIdFromRedis(id).get();
+        }else {
+            return chatMessageRepository.findById(id).get();
+        }
     }
 
 

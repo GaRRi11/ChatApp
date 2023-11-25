@@ -49,11 +49,31 @@ public class UserServiceImpl implements UserService {
             List<Long> senderFriendList = sender.getFriendsIdList();
             senderFriendList.add(receiverId);
             sender.setFriendsIdList(senderFriendList);
+
             save(reciever);
             save(sender);
         }
 
     }
+
+    @Override
+    public void deleteFriend(Long receiverId, Long senderId) {
+        User reciever = findById(receiverId).get(); //TODO mivxedav
+        User sender  = findById(senderId).get();
+        if (reciever != null && sender != null){
+            List<Long> receiverFriendList = reciever.getFriendsIdList();
+            receiverFriendList.remove(senderId);
+            reciever.setFriendsIdList(receiverFriendList);
+
+
+            List<Long> senderFriendList = sender.getFriendsIdList();
+            senderFriendList.remove(receiverId);
+            sender.setFriendsIdList(senderFriendList);
+
+            save(reciever);
+            save(sender);
+        }
+        }
 
     public void logout (HttpServletRequest request,HttpServletResponse response){
         sessionManager.logout(request,response);

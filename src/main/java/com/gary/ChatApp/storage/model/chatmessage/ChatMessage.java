@@ -47,16 +47,16 @@ public class ChatMessage {
             updatable = false,
             columnDefinition = "TEXT"
     )
-    private String sender; //maybe jpa ti davukavshiro users da usercontextit
+    private Long sender;
 
     @Column(
             name = "receiver",
             updatable = false,
             columnDefinition = "TEXT"
     )
-    private String receiver;
+    private Long receiver;
 
-    public ChatMessage(String content, String sender,String receiver) {
+    public ChatMessage(String content, Long sender,Long receiver) {
         this.content = content;
         this.sender = sender;
         this.receiver = receiver;
