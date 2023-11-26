@@ -6,17 +6,20 @@ import lombok.AllArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
 @AllArgsConstructor
+@Order(1)
 public class FriendControllerAspect {
 
     private final UserService userService;
 
 
-    @Around("@annotation(com.gary.ChatApp.web.controller.CheckUserExistence)")
+    @Before("@annotation(com.gary.ChatApp.web.controller.CheckUserExistence)")
     public Object checkIfUserExists(ProceedingJoinPoint joinPoint) throws Throwable {
         Long userId = extractReceiverId(joinPoint.getArgs());
         if (userService.findById(userId).isEmpty()){

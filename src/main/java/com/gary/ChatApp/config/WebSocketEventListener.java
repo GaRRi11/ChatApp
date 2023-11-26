@@ -4,6 +4,7 @@ import com.gary.ChatApp.service.user.UserService;
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
 import com.gary.ChatApp.storage.model.chatmessage.MessageType;
 import com.gary.ChatApp.storage.model.user.User;
+import com.gary.ChatApp.web.security.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -18,49 +19,28 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @Slf4j
 public class WebSocketEventListener {
 
-    private final SimpMessageSendingOperations messageTemplate;
     private final UserService userService;
 
-//    @EventListener
-//    public void HandlWebSocketDisconnectListener (
-//            SessionDisconnectEvent event
-//    ){
-//        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-//        String username = (String) headerAccessor.getSessionAttributes().get("username");
-//        if (username != null) {
-//            log.info("User disconnected: {}", username);
-//            var chatMessage = ChatMessage.builder()
-//                    //.messageType(MessageType.LEAVER)
-//                    .sender(username)
-//                    .build();
-//            messageTemplate.convertAndSend("/topic/public", chatMessage);
-//        }
-//    }
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String username = (String) headerAccessor.getSessionAttributes().get("username");
-        if (username != null) {
-            log.info("User connected: {}", username);
-            log.info("Active Users: {}", userService.getActiveUsers());
-            updateUserOnlineStatus(username, true);
+        User user = UserContext.getUser();
+        if (user != null) {
+            log.info("User connected: {}", user.getName());
+            updateUserOnlineStatus(user, true);
         }
     }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String username = (String) headerAccessor.getSessionAttributes().get("username");
-        if (username != null) {
-            log.info("User disconnected: {}", username);
-            log.info("Active Users: {}", userService.getActiveUsers());
-            updateUserOnlineStatus(username, false);
+        User user = UserContext.getUser();
+        if (user != null) {
+            log.info("User disconnected: {}", user.getName());
+            updateUserOnlineStatus(user, false);
         }
     }
 
-    private void updateUserOnlineStatus(String username, boolean onlineStatus) {
-        User user = userService.findByName(username).orElseThrow();
-        userService.setUserOnlineStatus(user, onlineStatus);
+    private void updateUserOnlineStatus(User user, boolean onlineStatus) {
+        userService.updateUserOnlineStatus(user,onlineStatus);
     }
 }

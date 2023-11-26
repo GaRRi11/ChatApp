@@ -28,7 +28,9 @@ public interface UserService {
 
     void logout (HttpServletRequest request, HttpServletResponse response);
 
-    void setUserOnlineStatus(User user, boolean onlineStatus);
+     void updateUserStatus();
+
+    void updateUserOnlineStatus(User user, boolean online);
 
     void updateLastSeen();
 

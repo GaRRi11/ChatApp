@@ -1,11 +1,8 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.exceptions.FriendshipDoesnotExistException;
 import com.gary.ChatApp.service.chatMessage.ChatMessageService;
-import com.gary.ChatApp.service.friendRequest.FriendRequestService;
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
 import com.gary.ChatApp.web.dto.ChatMessageDTOMapper;
-import com.gary.ChatApp.web.dto.ChatMessageRequest;
 import com.gary.ChatApp.web.security.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +10,11 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
@@ -26,6 +25,8 @@ public class ChatController {
 
     private final ChatMessageService chatMessageService;
     private final ChatMessageDTOMapper chatMessageDTOMapper;
+    private final SimpMessagingTemplate messagingTemplate;
+
 
 
     @MessageMapping("/chat/{friendId}")
@@ -34,12 +35,17 @@ public class ChatController {
     public ChatMessage sendMessage(@Payload String content, @DestinationVariable("friendId") Long friendId) {
 
         Long senderId = UserContext.getUser().getId();
-       return chatMessageService.save(chatMessageDTOMapper.fromDTO(
-               content,
-               senderId,
-               friendId
-       ));
+        ChatMessage savedMesage = chatMessageService.save(chatMessageDTOMapper.fromDTO(content, senderId, friendId));
+        messagingTemplate.convertAndSend("/topic/chat/" + friendId, savedMesage);
+        return savedMesage;
+
     }
-    //when chat will open between two persons
+    @GetMapping("/history/{friendId}")
+    public ResponseEntity<List<ChatMessage>> getChatHistory(@PathVariable("friendId") Long friendId) {
+        Long currentUserId = UserContext.getUser().getId();
+        List<ChatMessage> chatHistory = chatMessageService.getChatMessagesBetweenTwoUsers(currentUserId, friendId);
+        return ResponseEntity.ok(chatHistory);
+    }
+
 
 }

@@ -9,6 +9,7 @@ import com.gary.ChatApp.web.security.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -80,8 +81,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void setUserOnlineStatus(User user, boolean onlineStatus) {
-        user.setOnline(onlineStatus);
+    @Scheduled(fixedRate = 60000) // Runs every minute
+    public void updateUserStatus() {
+        User user = UserContext.getUser();
+        if (user!=null){
+            LocalDateTime lastseen = user.getLastSeen();
+            LocalDateTime now = LocalDateTime.now();
+            if (lastseen != null && lastseen.isBefore(now.minusMinutes(1))){
+                user.setOnline(false);
+            }else {
+                user.setOnline(true);
+            }
+        }
+    }
+
+    @Override
+    public void updateUserOnlineStatus(User user, boolean online) {
+        user.setOnline(online);
+        save(user);
     }
 
     @Override

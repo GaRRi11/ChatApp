@@ -1,4 +1,4 @@
-package com.gary.ChatApp.service.chatMessage;
+package com.gary.ChatApp.storage.repository;
 
 import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -83,5 +83,20 @@ public class RedisDB {
             String indexKey = "sender_receiver:" + sender + "_" + receiver;
             template.opsForSet().add(indexKey, message.getId().toString());
         }
+    }
+
+    public void setUserActiveStatus(Long userId, boolean isActive) {
+        String key = "user_status:" + userId;
+        template.opsForHash().put("user_status", key, isActive ? "active" : "inactive");
+    }
+
+    public String getUserActiveStatus(Long userId) {
+        String key = "user_status:" + userId;
+        return (String) template.opsForHash().get("user_status", key);
+    }
+
+    public Set<Object> getActiveUsers() {
+        String key = "active_users";
+        return template.opsForSet().members(key);
     }
 }
