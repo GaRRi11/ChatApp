@@ -1,7 +1,7 @@
 package com.gary.ChatApp.web.security;
 
-import com.gary.ChatApp.storage.model.user.User;
-import com.gary.ChatApp.storage.repository.UserRepository;
+import com.gary.ChatApp.domain.model.user.User;
+import com.gary.ChatApp.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

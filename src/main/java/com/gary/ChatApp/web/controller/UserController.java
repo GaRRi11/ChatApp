@@ -1,10 +1,7 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.service.user.UserService;
-import com.gary.ChatApp.service.user.UserServiceImpl;
-import com.gary.ChatApp.storage.model.user.User;
-import com.gary.ChatApp.web.dto.UserDTOMapper;
-import com.gary.ChatApp.web.dto.UserRequest;
+import com.gary.ChatApp.domain.service.user.UserService;
+import com.gary.ChatApp.domain.model.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

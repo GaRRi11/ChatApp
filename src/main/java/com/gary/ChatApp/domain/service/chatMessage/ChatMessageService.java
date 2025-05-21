@@ -1,6 +1,6 @@
-package com.gary.ChatApp.service.chatMessage;
+package com.gary.ChatApp.domain.service.chatMessage;
 
-import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
+import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
 
 import java.util.List;
 

@@ -1,6 +1,6 @@
-package com.gary.ChatApp.service.friendRequest;
+package com.gary.ChatApp.domain.service.friendRequest;
 
-import com.gary.ChatApp.storage.model.friendrequest.FriendRequest;
+import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

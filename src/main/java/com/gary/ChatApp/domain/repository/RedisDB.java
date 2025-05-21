@@ -1,6 +1,6 @@
-package com.gary.ChatApp.storage.repository;
+package com.gary.ChatApp.domain.repository;
 
-import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
+import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;

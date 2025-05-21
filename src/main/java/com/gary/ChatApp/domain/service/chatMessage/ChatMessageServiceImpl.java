@@ -1,8 +1,8 @@
-package com.gary.ChatApp.service.chatMessage;
+package com.gary.ChatApp.domain.service.chatMessage;
 
-import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
-import com.gary.ChatApp.storage.repository.ChatMessageRepository;
-import com.gary.ChatApp.storage.repository.RedisDB;
+import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
+import com.gary.ChatApp.domain.repository.ChatMessageRepository;
+import com.gary.ChatApp.domain.repository.RedisDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

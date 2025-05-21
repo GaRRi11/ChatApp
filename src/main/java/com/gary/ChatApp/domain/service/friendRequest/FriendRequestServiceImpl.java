@@ -1,11 +1,11 @@
-package com.gary.ChatApp.service.friendRequest;
+package com.gary.ChatApp.domain.service.friendRequest;
 
 import com.gary.ChatApp.exceptions.FriendshipAlreadyExistsException;
-import com.gary.ChatApp.service.user.UserService;
-import com.gary.ChatApp.storage.model.friendrequest.FriendRequest;
-import com.gary.ChatApp.storage.model.friendrequest.RequestStatus;
-import com.gary.ChatApp.storage.model.user.User;
-import com.gary.ChatApp.storage.repository.FriendRequestRepository;
+import com.gary.ChatApp.domain.service.user.UserService;
+import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
+import com.gary.ChatApp.domain.model.friendrequest.RequestStatus;
+import com.gary.ChatApp.domain.model.user.User;
+import com.gary.ChatApp.domain.repository.FriendRequestRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

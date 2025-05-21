@@ -1,7 +1,7 @@
 package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.exceptions.UserDoesnotExistException;
-import com.gary.ChatApp.service.user.UserService;
+import com.gary.ChatApp.domain.service.user.UserService;
 import lombok.AllArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

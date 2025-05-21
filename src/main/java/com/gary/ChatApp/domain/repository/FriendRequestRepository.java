@@ -1,7 +1,6 @@
-package com.gary.ChatApp.storage.repository;
+package com.gary.ChatApp.domain.repository;
 
-import com.gary.ChatApp.storage.model.friendrequest.FriendRequest;
-import com.gary.ChatApp.storage.model.user.User;
+import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

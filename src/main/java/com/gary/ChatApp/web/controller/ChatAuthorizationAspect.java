@@ -1,7 +1,7 @@
 package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.exceptions.FriendshipDoesnotExistException;
-import com.gary.ChatApp.service.friendRequest.FriendRequestService;
+import com.gary.ChatApp.domain.service.friendRequest.FriendRequestService;
 import com.gary.ChatApp.web.security.UserContext;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

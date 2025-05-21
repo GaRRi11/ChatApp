@@ -1,7 +1,7 @@
-package com.gary.ChatApp.service.user;
+package com.gary.ChatApp.domain.service.user;
 
-import com.gary.ChatApp.storage.model.user.User;
-import com.gary.ChatApp.storage.repository.UserRepository;
+import com.gary.ChatApp.domain.model.user.User;
+import com.gary.ChatApp.domain.repository.UserRepository;
 import com.gary.ChatApp.web.dto.UserRequest;
 import com.gary.ChatApp.web.security.SessionManager;
 import com.gary.ChatApp.web.security.UserAuthenticationManager;

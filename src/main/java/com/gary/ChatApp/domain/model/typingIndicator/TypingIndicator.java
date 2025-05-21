@@ -1,4 +1,4 @@
-package com.gary.ChatApp.storage.model.typingIndicator;
+package com.gary.ChatApp.domain.model.typingIndicator;
 
 import lombok.Data;
 

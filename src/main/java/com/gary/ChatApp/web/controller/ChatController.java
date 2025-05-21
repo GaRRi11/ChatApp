@@ -1,7 +1,7 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.service.chatMessage.ChatMessageService;
-import com.gary.ChatApp.storage.model.chatmessage.ChatMessage;
+import com.gary.ChatApp.domain.service.chatMessage.ChatMessageService;
+import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
 import com.gary.ChatApp.web.dto.ChatMessageDTOMapper;
 import com.gary.ChatApp.web.security.UserContext;
 import lombok.RequiredArgsConstructor;

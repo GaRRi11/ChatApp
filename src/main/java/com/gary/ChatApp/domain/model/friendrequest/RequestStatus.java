@@ -1,4 +1,4 @@
-package com.gary.ChatApp.storage.model.friendrequest;
+package com.gary.ChatApp.domain.model.friendrequest;
 
 public enum RequestStatus {
     PENDING,

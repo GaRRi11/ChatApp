@@ -1,7 +1,6 @@
 package com.gary.ChatApp.config;
 
-import com.gary.ChatApp.service.user.UserService;
-import com.gary.ChatApp.web.security.UserContext;
+import com.gary.ChatApp.domain.service.user.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -15,8 +14,6 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-
-import java.time.LocalDateTime;
 
 @Configuration
 @EnableWebSocketMessageBroker

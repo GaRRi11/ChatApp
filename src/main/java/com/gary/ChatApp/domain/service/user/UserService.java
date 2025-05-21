@@ -1,6 +1,6 @@
-package com.gary.ChatApp.service.user;
+package com.gary.ChatApp.domain.service.user;
 
-import com.gary.ChatApp.storage.model.user.User;
+import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.web.dto.UserRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

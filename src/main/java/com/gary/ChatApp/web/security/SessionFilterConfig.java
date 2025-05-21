@@ -1,6 +1,6 @@
 package com.gary.ChatApp.web.security;
 
-import com.gary.ChatApp.storage.repository.UserRepository;
+import com.gary.ChatApp.domain.repository.UserRepository;
 import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;

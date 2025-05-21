@@ -1,6 +1,6 @@
 package com.gary.ChatApp.web.security;
 
-import com.gary.ChatApp.storage.model.user.User;
+import com.gary.ChatApp.domain.model.user.User;
 
 public class UserContext {
 

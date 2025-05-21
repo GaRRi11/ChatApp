@@ -1,8 +1,8 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.service.friendRequest.FriendRequestService;
-import com.gary.ChatApp.service.user.UserService;
-import com.gary.ChatApp.storage.model.friendrequest.FriendRequest;
+import com.gary.ChatApp.domain.service.friendRequest.FriendRequestService;
+import com.gary.ChatApp.domain.service.user.UserService;
+import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
 import com.gary.ChatApp.web.dto.FriendRequestDTOMapper;
 import com.gary.ChatApp.web.security.UserContext;
 import lombok.AllArgsConstructor;

@@ -1,6 +1,6 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.service.user.UserService;
+import com.gary.ChatApp.domain.service.user.UserService;
 import com.gary.ChatApp.web.dto.UserDTOMapper;
 import com.gary.ChatApp.web.dto.UserRequest;
 import jakarta.servlet.http.HttpServletRequest;
