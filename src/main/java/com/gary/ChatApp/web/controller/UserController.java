@@ -1,28 +1,32 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.domain.service.user.UserService;
 import com.gary.ChatApp.domain.model.user.User;
+import com.gary.ChatApp.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
+
     private final UserService userService;
 
-    @GetMapping("/all")
-    public ResponseEntity<List<User>> getAllUsers(){
-        return ResponseEntity.ok(userService.getAll());
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        return userService.getById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    @GetMapping("all/actives")
-    public ResponseEntity<List<User>> getActiveUsers(){
-        return ResponseEntity.ok(userService.getActiveUsers());
+    @GetMapping("/online")
+    public List<User> getOnlineUsers() {
+        return userService.getOnlineUsers();
     }
 
-
+    @PostMapping("/{id}/status")
+    public void setOnlineStatus(@PathVariable Long id, @RequestParam boolean online) {
+        userService.setOnlineStatus(id, online);
+    }
 }
