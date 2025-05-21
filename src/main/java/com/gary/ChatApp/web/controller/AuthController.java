@@ -1,58 +1,43 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.domain.service.user.UserService;
-import com.gary.ChatApp.web.dto.UserDTOMapper;
-import com.gary.ChatApp.web.dto.UserRequest;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.gary.ChatApp.domain.model.user.User;
+import com.gary.ChatApp.repository.UserRepository;
+import com.gary.ChatApp.security.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthController {
 
-    private final UserService userService;
-
-    private final UserDTOMapper userDTOMapper;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody UserRequest userRequest) {
-
-        if (userRequest.getName() == null) {
-            throw new NullPointerException("The request was malformed or missing required fields");
+    public String register(@RequestParam String name, @RequestParam String password) {
+        if (userRepository.findByName(name).isPresent()) {
+            throw new RuntimeException("Username already exists");
         }
 
-        if (userService.findByName(userRequest.getName()).isPresent()) {
-            throw new IllegalArgumentException("Username already exists");
-        }
-
-        userService.save(userDTOMapper.fromDTO(userRequest));
-        log.info("registered user: {}", userRequest.getName());
-
-        return ResponseEntity.ok("registered");
-
+        User user = new User();
+        user.setName(name);
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+        return "User registered successfully";
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> authenticate(@RequestBody UserRequest request, HttpServletResponse response) {
-        if (
-                request.getName() == null ||
-                        request.getPassword() == null
-        ) {
-            throw new NullPointerException("The request was malformed or missing required fields");
+    public String login(@RequestParam String name, @RequestParam String password) {
+        User user = userRepository.findByName(name)
+                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
         }
-        userService.authenticate(request, response);
-        log.info("user logged: {}",request.getName());
-        return ResponseEntity.ok("logged in");
 
+        return jwtTokenUtil.generateToken(user.getName());
     }
-
-    //logout happens from frontend
-
 }
