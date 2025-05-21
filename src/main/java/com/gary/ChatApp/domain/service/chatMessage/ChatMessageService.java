@@ -5,13 +5,6 @@ import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
 import java.util.List;
 
 public interface ChatMessageService {
-    ChatMessage save(ChatMessage chatMessage);
-
-    List<ChatMessage> getAll();
-
-    ChatMessage findById(Long id);
-
-     List<ChatMessage> getChatMessagesBetweenTwoUsers(Long senderId, Long receiverId);
-
-
+    ChatMessage sendMessage(Long senderId, Long receiverId, String content);
+    List<ChatMessage> getChatHistory(Long user1Id, Long user2Id);
 }

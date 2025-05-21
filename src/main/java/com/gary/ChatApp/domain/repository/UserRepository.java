@@ -2,15 +2,12 @@ package com.gary.ChatApp.domain.repository;
 
 import com.gary.ChatApp.domain.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
-@Repository
-public interface UserRepository extends JpaRepository<User,Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByName(String name);
 
-    @Query("SELECT s FROM User s WHERE s.name = ?1")
-    Optional<User> findByName (String email);
-
+    List<User> findByOnlineTrue();
 }

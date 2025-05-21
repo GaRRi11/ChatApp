@@ -1,78 +1,46 @@
 package com.gary.ChatApp.domain.service.friendRequest;
 
-import com.gary.ChatApp.exceptions.FriendshipAlreadyExistsException;
-import com.gary.ChatApp.domain.service.user.UserService;
 import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
 import com.gary.ChatApp.domain.model.friendrequest.RequestStatus;
-import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.domain.repository.FriendRequestRepository;
-import lombok.AllArgsConstructor;
+import com.gary.ChatApp.domain.model.friendrequest.Friendship;
+import com.gary.ChatApp.repository.FriendRequestRepository;
+import com.gary.ChatApp.repository.FriendshipRepository;
+import com.gary.ChatApp.service.FriendRequestService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
-@AllArgsConstructor
-public class FriendRequestServiceImpl implements FriendRequestService{
+@RequiredArgsConstructor
+public class FriendRequestServiceImpl implements FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
-    private final UserService userService;
-
+    private final FriendshipRepository friendshipRepository;
 
     @Override
-    public FriendRequest sendFriendRequest(FriendRequest friendRequest) {
-        if (checkFriendStatus(friendRequest.getSenderId(),friendRequest.getReceiverId())){
-            throw new FriendshipAlreadyExistsException(friendRequest.getSenderId(),friendRequest.getReceiverId());
-        }
-        if (!checkIfExists(friendRequest)){
-            friendRequest.setRequestStatus(RequestStatus.PENDING);
-            friendRequestRepository.save(friendRequest);
-        }
-        return friendRequest;
+    public FriendRequest sendRequest(Long senderId, Long receiverId) {
+        return friendRequestRepository.save(
+                new FriendRequest(null, senderId, receiverId, RequestStatus.PENDING)
+        );
     }
 
     @Override
-    public FriendRequest acceptFriendRequest(FriendRequest friendRequest) {
-        friendRequest.setRequestStatus(RequestStatus.ACCEPTED);
-        friendRequestRepository.save(friendRequest);
-        userService.addFriend(friendRequest.getSenderId(),friendRequest.getReceiverId());
-        return friendRequest;
-    }
+    public void respondToRequest(Long requestId, boolean accepted) {
+        FriendRequest request = friendRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
 
-    @Override
-    public FriendRequest declineFriendRequest(FriendRequest friendRequest) {
-        friendRequest.setRequestStatus(RequestStatus.DECLINED);
-        friendRequestRepository.save(friendRequest);
-        return friendRequest;
-    }
+        request.setStatus(accepted ? RequestStatus.ACCEPTED : RequestStatus.DECLINED);
+        friendRequestRepository.save(request);
 
-    @Override
-    public FriendRequest unfriend(FriendRequest friendRequest) {
-        friendRequest.setRequestStatus(RequestStatus.UNFRIEND);
-        friendRequestRepository.save(friendRequest);
-        userService.deleteFriend(friendRequest.getSenderId(),friendRequest.getReceiverId());
-        return friendRequest;
-    }
-
-    @Override
-    public boolean checkIfExists(FriendRequest friendRequest) {
-        return friendRequestRepository.existsBySenderIdAndReceiverId(friendRequest.getSenderId(), friendRequest.getReceiverId());
-    }
-
-    @Override
-    public boolean checkFriendStatus(Long senderId, Long receiverId) {
-        User sender = userService.findById(senderId).get();
-        List<Long> friendList = sender.getFriendsIdList();
-        if (friendList.contains(receiverId)){
-            return true;
-        }else {
-            return false;
+        if (accepted) {
+            friendshipRepository.save(new Friendship(null, request.getSenderId(), request.getReceiverId()));
+            friendshipRepository.save(new Friendship(null, request.getReceiverId(), request.getSenderId()));
         }
     }
 
     @Override
-    public Optional<FriendRequest> findById(Long id) {
-        return Optional.empty();
+    public List<FriendRequest> getPendingRequests(Long userId) {
+        return friendRequestRepository.findByReceiverIdAndStatus(userId, RequestStatus.PENDING);
     }
 }

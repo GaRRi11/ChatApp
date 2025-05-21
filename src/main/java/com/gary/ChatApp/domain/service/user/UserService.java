@@ -1,40 +1,13 @@
-package com.gary.ChatApp.domain.service.user;
+package com.gary.ChatApp.service;
 
 import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.web.dto.UserRequest;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.List;
 
-@Service
 public interface UserService {
-
-    User save(User user);
-
-    Optional<User> findByName(String name);
-
-    Optional<User> findById(Long Id);
-
-
-    void authenticate(UserRequest request, HttpServletResponse response);
-
-    void addFriend(Long receiverId,Long senderId);
-
-    void deleteFriend(Long receiverId,Long senderId);
-
-
-    void logout (HttpServletRequest request, HttpServletResponse response);
-
-     void updateUserStatus();
-
-    void updateUserOnlineStatus(User user, boolean online);
-
-    void updateLastSeen();
-
-    List<User> getAll();
-
-    List<User> getActiveUsers();
+    Optional<User> getById(Long id);
+    Optional<User> getByName(String name);
+    void setOnlineStatus(Long userId, boolean online);
+    List<User> getOnlineUsers();
 }
