@@ -1,26 +1,39 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
-import com.gary.ChatApp.service.ChatMessageService;
+import com.gary.ChatApp.domain.service.chatMessage.ChatMessageService;
+import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
+import com.gary.ChatApp.web.dto.ChatMessageDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import java.time.LocalDateTime;
+import jakarta.validation.Valid;
+
 
 @Controller
 @RequiredArgsConstructor
 public class ChatWebSocketController {
 
-    private final ChatMessageService chatMessageService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatMessageService chatMessageService; // 👈 Add this
 
-    @MessageMapping("/chat.send")
-    @SendTo("/topic/messages") // destination for subscribers
-    public ChatMessage sendMessage(@Payload ChatMessage chatMessage) {
-        return chatMessageService.sendMessage(
-                chatMessage.getSenderId(),
-                chatMessage.getReceiverId(),
-                chatMessage.getContent()
+    @MessageMapping("/send")
+    public void sendMessage(@Valid ChatMessageDto message) {
+        if (message.getReceiverId() == null || message.getSenderId() == null) return;
+
+        // Save and cache message
+        chatMessageService.sendMessage(message.getSenderId(), message.getReceiverId(), message.getContent());
+
+        message.setTimestamp(LocalDateTime.now());
+
+        messagingTemplate.convertAndSendToUser(
+                message.getReceiverId().toString(),
+                "/queue/messages",
+                message
         );
+
+
     }
 }
+

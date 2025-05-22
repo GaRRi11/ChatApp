@@ -1,7 +1,10 @@
-package com.gary.ChatApp.controller;
+package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
-import com.gary.ChatApp.service.FriendRequestService;
+import com.gary.ChatApp.domain.service.friendRequest.FriendRequestService;
+import com.gary.ChatApp.domain.service.friendship.FriendshipService;
+import com.gary.ChatApp.exceptions.FriendshipAlreadyExistsException;
+import com.gary.ChatApp.web.dto.FriendRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +16,14 @@ import java.util.List;
 public class FriendRequestController {
 
     private final FriendRequestService friendRequestService;
+    private final FriendshipService friendshipService;
 
     @PostMapping
-    public FriendRequest sendRequest(@RequestParam Long senderId, @RequestParam Long receiverId) {
-        return friendRequestService.sendRequest(senderId, receiverId);
+    public FriendRequestDto sendRequest(@RequestBody FriendRequestDto request) {
+        if (friendshipService.areFriends(request.getSenderId(), request.getReceiverId())) {
+            throw new FriendshipAlreadyExistsException(request.getSenderId(), request.getReceiverId());
+        }
+        return friendRequestService.sendRequest(request.getSenderId(), request.getReceiverId());
     }
 
     @PostMapping("/{id}/respond")
@@ -25,7 +32,7 @@ public class FriendRequestController {
     }
 
     @GetMapping("/pending/{userId}")
-    public List<FriendRequest> getPendingRequests(@PathVariable Long userId) {
+    public List<FriendRequestDto> getPendingRequests(@PathVariable Long userId) {
         return friendRequestService.getPendingRequests(userId);
     }
 }

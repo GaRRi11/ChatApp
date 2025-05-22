@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class UserDTOMapper {
 
     private final UserPasswordEncoder userPasswordEncoder;
+
     public User fromDTO (UserRequest userRequest){
         return new User(
                 userRequest.getName(),

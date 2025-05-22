@@ -10,6 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "password")
 public class User {
 
     @Id
@@ -17,11 +18,11 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true, length = 100)
-    private String name;
+    private String username;
 
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "is_online", nullable = false)
+    @Transient
     private boolean online;
 }

@@ -1,8 +1,11 @@
 package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.repository.UserRepository;
+import com.gary.ChatApp.domain.repository.UserRepository;
+import com.gary.ChatApp.exceptions.DuplicateResourceException;
+import com.gary.ChatApp.exceptions.UnauthorizedException;
 import com.gary.ChatApp.security.JwtTokenUtil;
+import com.gary.ChatApp.web.dto.AuthRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -17,27 +20,27 @@ public class AuthController {
     private final JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("/register")
-    public String register(@RequestParam String name, @RequestParam String password) {
-        if (userRepository.findByName(name).isPresent()) {
-            throw new RuntimeException("Username already exists");
+    public String register(@RequestBody AuthRequest request) {
+        if (userRepository.findByName(request.getName()).isPresent()) {
+            throw new DuplicateResourceException("Username already exists");
         }
 
         User user = new User();
-        user.setName(name);
-        user.setPassword(passwordEncoder.encode(password));
+        user.setUsername(request.getName());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
         return "User registered successfully";
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String name, @RequestParam String password) {
-        User user = userRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+    public String login(@RequestBody AuthRequest request) {
+        User user = userRepository.findByName(request.getName())
+                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new UnauthorizedException("Invalid credentials");
         }
 
-        return jwtTokenUtil.generateToken(user.getName());
+        return jwtTokenUtil.generateToken(user.getUsername());
     }
 }

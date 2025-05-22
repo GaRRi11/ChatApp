@@ -24,7 +24,7 @@ public class ChatMessage {
     @Column(name = "receiver_id", nullable = false)
     private Long receiverId;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT", length = 500)
     private String content;
 
     @Column(name = "sent_at", nullable = false)

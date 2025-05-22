@@ -1,42 +1,37 @@
-//package com.gary.ChatApp.config;
-//
-//import io.lettuce.core.RedisURI;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.context.annotation.Primary;
-//import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-//import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-//import org.springframework.data.redis.core.RedisTemplate;
-//import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
-//import org.springframework.data.redis.serializer.StringRedisSerializer;
-//
-//@Configuration
-//public class RedisConfig {
-//
-//    @Value("${spring.data.redis.host}")
-//    private String redisHost;
-//
-//    @Value("${spring.data.redis.port}")
-//    private int redisPort;
-//
-//    @Bean
-//    public LettuceConnectionFactory lettuceConnectionFactory() {
-//        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration(redisHost, redisPort);
-//        return new LettuceConnectionFactory(redisConfig);
-//    }
-//    @Bean
-//    @Primary
-//    public RedisTemplate<String, Object> myRedisTemplate() {
-//        RedisTemplate<String, Object> template = new RedisTemplate<>();
-//        template.setConnectionFactory(lettuceConnectionFactory());
-//        template.setKeySerializer(new StringRedisSerializer());
-//        template.setHashKeySerializer(new StringRedisSerializer());
-//        template.setHashKeySerializer(new JdkSerializationRedisSerializer());
-//        template.setValueSerializer(new JdkSerializationRedisSerializer());
-//        template.setEnableTransactionSupport(true);
-//        template.afterPropertiesSet();
-//        return template;
-//    }
-//
-//}
+package com.gary.ChatApp.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+@Configuration
+
+/*
+* Sets up connection to Redis, an in-memory data store often used
+* for caching and messaging.
+
+Creates a RedisTemplate bean for easy Redis operations in your app.
+
+Useful if you want to store presence info, messages, or any shared
+* state in Redis for speed and scalability.
+*
+* */
+public class RedisConfig {
+
+    @Bean
+    public LettuceConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory();
+    }
+
+    @Bean
+    public RedisTemplate<String, String> redisTemplate() {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory());
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        return template;
+    }
+
+}

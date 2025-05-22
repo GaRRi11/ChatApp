@@ -1,11 +1,13 @@
 package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.service.UserService;
+import com.gary.ChatApp.domain.service.user.UserService;
+import com.gary.ChatApp.exceptions.ResourceNotFoundException;
+import com.gary.ChatApp.web.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -15,18 +17,25 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
-        return userService.getById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public UserDto getUserById(@PathVariable Long id) {
+        User user = userService.getById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return mapToDto(user);
     }
 
     @GetMapping("/online")
-    public List<User> getOnlineUsers() {
-        return userService.getOnlineUsers();
+    public List<UserDto> getOnlineUsers() {
+        return userService.getOnlineUsers().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
-    @PostMapping("/{id}/status")
+    @PatchMapping("/{id}/status")
     public void setOnlineStatus(@PathVariable Long id, @RequestParam boolean online) {
         userService.setOnlineStatus(id, online);
+    }
+
+    private UserDto mapToDto(User user) {
+        return new UserDto(user.getId(), user.getUsername(), user.isOnline());
     }
 }

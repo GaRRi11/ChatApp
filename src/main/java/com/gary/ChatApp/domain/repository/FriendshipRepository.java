@@ -1,6 +1,6 @@
 package com.gary.ChatApp.domain.repository;
 
-import com.gary.ChatApp.domain.model.friendrequest.Friendship;
+import com.gary.ChatApp.domain.model.friendship.Friendship;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

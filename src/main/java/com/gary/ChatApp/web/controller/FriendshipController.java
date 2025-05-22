@@ -1,6 +1,6 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.service.FriendshipService;
+import com.gary.ChatApp.domain.service.friendship.FriendshipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +18,8 @@ public class FriendshipController {
         return friendshipService.getFriendIds(userId);
     }
 
-    @DeleteMapping
-    public void removeFriend(@RequestParam Long userId, @RequestParam Long friendId) {
+    @DeleteMapping("/{userId}/remove/{friendId}")
+    public void removeFriend(@PathVariable Long userId, @PathVariable Long friendId) {
         friendshipService.removeFriend(userId, friendId);
     }
 }

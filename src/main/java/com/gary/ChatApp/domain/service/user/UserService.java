@@ -1,4 +1,4 @@
-package com.gary.ChatApp.service;
+package com.gary.ChatApp.domain.service.user;
 
 import com.gary.ChatApp.domain.model.user.User;
 
