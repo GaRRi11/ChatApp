@@ -3,6 +3,7 @@ package com.gary.ChatApp.domain.service.user;
 import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.repository.UserRepository;
 import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
+import com.gary.ChatApp.exceptions.UnauthorizedException;
 import com.gary.ChatApp.security.JwtTokenUtil;
 import com.gary.ChatApp.web.dto.LoginResponse;
 import lombok.RequiredArgsConstructor;

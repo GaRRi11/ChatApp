@@ -1,4 +1,4 @@
-package com.gary.ChatApp.config;
+package com.gary.ChatApp.exceptions;
 
 import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +9,10 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 @RequiredArgsConstructor
+//UPDATES ONLINE STATUS
 public class PresenceInterceptor implements HandlerInterceptor {
+
+
 
     private final UserPresenceService userPresenceService;
 

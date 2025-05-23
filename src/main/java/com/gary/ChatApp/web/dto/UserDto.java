@@ -1,32 +1,20 @@
 package com.gary.ChatApp.web.dto;
 
 import com.gary.ChatApp.domain.model.user.User;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-@AllArgsConstructor
-@Builder
-public class UserDto {
+public record UserDto(
+        @NotBlank(message = "Username must not be blank")
+        String username,
 
-    private String username;
-    private boolean online;
-
-    private final UserPasswordEncoder userPasswordEncoder;
-
-    public User fromDTO (AuthRequest authRequest){
-        return new User(
-                authRequest.getName(),
-                userPasswordEncoder.encode(authRequest.getPassword())
+        @NotNull (message = "Online status must be provided")
+        Boolean online
+) {
+    public static UserDto fromEntity(User user) {
+        return new UserDto(
+                user.getUsername(),
+                user.isOnline()
         );
     }
-
-    public static UserDto fromEntity(User user){
-        return UserDto.builder()
-                .username(user.getUsername())
-                .online(user.isOnline())
-                .build();
-    }
 }
-

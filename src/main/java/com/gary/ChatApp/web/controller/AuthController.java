@@ -24,24 +24,24 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestBody @Valid AuthRequest request) {
-        if (userRepository.findByName(request.name()).isPresent()) {
+        if (userRepository.findByName(request.username()).isPresent()) {
             throw new DuplicateResourceException("Username already exists");
         }
 
-        return userService.register(request.name(), request.password());
+        return userService.register(request.username(), request.password());
 
     }
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody @Valid AuthRequest request) {
-        User user = userRepository.findByName(request.name())
+        User user = userRepository.findByName(request.username())
                 .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new UnauthorizedException("Invalid credentials");
         }
 
-        return userService.login(request.name(), request.password());
+        return userService.login(request.username(), request.password());
 
     }
 }

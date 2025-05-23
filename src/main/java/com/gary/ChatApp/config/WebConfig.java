@@ -1,5 +1,6 @@
 package com.gary.ChatApp.config;
 
+import com.gary.ChatApp.exceptions.PresenceInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
