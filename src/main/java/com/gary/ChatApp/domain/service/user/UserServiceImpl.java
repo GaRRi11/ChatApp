@@ -3,7 +3,10 @@ package com.gary.ChatApp.domain.service.user;
 import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.repository.UserRepository;
 import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
+import com.gary.ChatApp.security.JwtTokenUtil;
+import com.gary.ChatApp.web.dto.LoginResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -16,6 +19,33 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserPresenceService userPresenceService;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenUtil jwtTokenUtil;
+
+    @Override
+    public String register(String username, String password) {
+
+        userRepository.save(User.builder()
+                .username(username)
+                .password(passwordEncoder.encode(password))
+                .build());
+
+        return "User registered successfully";
+    }
+
+    @Override
+    public LoginResponse login(String username, String password) {
+        User user = userRepository.findByName(username)
+                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        String token = jwtTokenUtil.generateToken(user.getUsername());
+        return new LoginResponse(token, user.getUsername());
+    }
+
 
     @Override
     public Optional<User> getById(Long id) {

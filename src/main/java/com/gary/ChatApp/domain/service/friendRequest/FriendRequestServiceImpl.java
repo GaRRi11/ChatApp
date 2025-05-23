@@ -5,6 +5,7 @@ import com.gary.ChatApp.domain.model.friendrequest.RequestStatus;
 import com.gary.ChatApp.domain.repository.FriendRequestRepository;
 import com.gary.ChatApp.domain.repository.FriendshipRepository;
 import com.gary.ChatApp.domain.service.friendship.FriendshipManager;
+import com.gary.ChatApp.web.dto.FriendRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,10 +22,14 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
 
     @Override
-    public FriendRequest sendRequest(Long senderId, Long receiverId) {
-        return friendRequestRepository.save(
-                new FriendRequest(null, senderId, receiverId, RequestStatus.PENDING)
-        );
+    public FriendRequestDto sendRequest(Long senderId, Long receiverId) {
+        return FriendRequestDto.fromEntity(
+                friendRequestRepository.save(
+                FriendRequest.builder()
+                        .senderId(senderId)
+                        .receiverId(receiverId)
+                        .status(RequestStatus.PENDING)
+                        .build()));
     }
 
     @Override
@@ -45,7 +50,9 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
     @Override
-    public List<FriendRequest> getPendingRequests(Long userId) {
-        return friendRequestRepository.findByReceiverIdAndStatus(userId, RequestStatus.PENDING);
+    public List<FriendRequestDto> getPendingRequests(Long userId) {
+        return friendRequestRepository.findByReceiverIdAndStatus(userId, RequestStatus.PENDING).stream()
+                .map(FriendRequestDto::fromEntity)  // convert each entity to DTO
+                .toList();  // collect as List<FriendRequestDto>
     }
 }

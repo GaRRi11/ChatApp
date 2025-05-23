@@ -28,12 +28,12 @@ public class ChatMessage {
     private String content;
 
     @Column(name = "sent_at", nullable = false)
-    private LocalDateTime sentAt;
+    private LocalDateTime timestamp;
 
     @PrePersist
     public void prePersist() {
-        if (sentAt == null) {
-            sentAt = LocalDateTime.now();
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
         }
     }
 }

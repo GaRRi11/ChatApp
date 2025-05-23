@@ -29,19 +29,12 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .senderId(senderId)
                 .receiverId(receiverId)
                 .content(content)
-                .sentAt(LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         ChatMessage savedMessage = chatMessageRepository.save(message);
 
-        // Convert to DTO for caching (or use mapper)
-        ChatMessageDto dto = new ChatMessageDto();
-        dto.setSenderId(senderId);
-        dto.setReceiverId(receiverId);
-        dto.setContent(content);
-        dto.setTimestamp(savedMessage.getSentAt());
-
-        chatCacheService.cacheMessage(dto); // 👈 Cache it in Redis too
+        chatCacheService.cacheMessage(ChatMessageDto.fromEntity(savedMessage)); // 👈 Cache it in Redis too
 
         return savedMessage;
     }

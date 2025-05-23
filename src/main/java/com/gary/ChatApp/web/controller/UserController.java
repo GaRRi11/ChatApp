@@ -20,13 +20,13 @@ public class UserController {
     public UserDto getUserById(@PathVariable Long id) {
         User user = userService.getById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return mapToDto(user);
+        return UserDto.fromEntity(user);
     }
 
     @GetMapping("/online")
     public List<UserDto> getOnlineUsers() {
         return userService.getOnlineUsers().stream()
-                .map(this::mapToDto)
+                .map(UserDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -35,7 +35,5 @@ public class UserController {
         userService.setOnlineStatus(id, online);
     }
 
-    private UserDto mapToDto(User user) {
-        return new UserDto(user.getId(), user.getUsername(), user.isOnline());
-    }
+
 }

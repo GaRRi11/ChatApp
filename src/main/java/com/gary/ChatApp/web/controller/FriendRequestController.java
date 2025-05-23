@@ -20,10 +20,10 @@ public class FriendRequestController {
 
     @PostMapping
     public FriendRequestDto sendRequest(@RequestBody FriendRequestDto request) {
-        if (friendshipService.areFriends(request.getSenderId(), request.getReceiverId())) {
-            throw new FriendshipAlreadyExistsException(request.getSenderId(), request.getReceiverId());
+        if (friendshipService.areFriends(request.senderId(), request.receiverId())) {
+            throw new FriendshipAlreadyExistsException(request.senderId(), request.receiverId());
         }
-        return friendRequestService.sendRequest(request.getSenderId(), request.getReceiverId());
+        return friendRequestService.sendRequest(request.senderId(), request.receiverId());
     }
 
     @PostMapping("/{id}/respond")

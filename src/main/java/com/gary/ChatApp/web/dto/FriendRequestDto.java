@@ -1,13 +1,15 @@
 package com.gary.ChatApp.web.dto;
 
-import lombok.Data;
+import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
+import com.gary.ChatApp.domain.model.friendrequest.RequestStatus;
 
-@Data
-public class FriendRequestDto {
-    private Long senderId;
-    private Long receiverId;
-    private String status; // Optional
+public record FriendRequestDto(Long senderId, Long receiverId, RequestStatus status) {
 
-
+    public static FriendRequestDto fromEntity(FriendRequest friendRequest) {
+        return new FriendRequestDto(
+                friendRequest.getSenderId(),
+                friendRequest.getReceiverId(),
+                friendRequest.getStatus()
+        );
+    }
 }
-

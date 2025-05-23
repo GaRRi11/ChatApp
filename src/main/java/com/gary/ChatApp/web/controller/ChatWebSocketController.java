@@ -20,17 +20,23 @@ public class ChatWebSocketController {
 
     @MessageMapping("/send")
     public void sendMessage(@Valid ChatMessageDto message) {
-        if (message.getReceiverId() == null || message.getSenderId() == null) return;
+        if (message.receiverId() == null || message.senderId() == null) return;
 
         // Save and cache message
-        chatMessageService.sendMessage(message.getSenderId(), message.getReceiverId(), message.getContent());
+        chatMessageService.sendMessage(message.senderId(), message.receiverId(), message.content());
 
-        message.setTimestamp(LocalDateTime.now());
+        ChatMessageDto updatedMessage = new ChatMessageDto(
+                message.senderId(),
+                message.receiverId(),
+                message.content(),
+                LocalDateTime.now()
+        );
+
 
         messagingTemplate.convertAndSendToUser(
-                message.getReceiverId().toString(),
+                message.receiverId().toString(),
                 "/queue/messages",
-                message
+                updatedMessage
         );
 
 
