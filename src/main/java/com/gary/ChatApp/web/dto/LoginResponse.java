@@ -1,6 +1,11 @@
 package com.gary.ChatApp.web.dto;
 
 
+import lombok.Builder;
 
-public record LoginResponse(String token, String username) {}
+@Builder
+public record LoginResponse(
+        Long id,
+        String token,
+        String username) {}
 

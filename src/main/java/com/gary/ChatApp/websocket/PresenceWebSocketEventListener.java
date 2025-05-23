@@ -1,4 +1,4 @@
-package com.gary.ChatApp.config;
+package com.gary.ChatApp.websocket;
 
 import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
 import lombok.RequiredArgsConstructor;

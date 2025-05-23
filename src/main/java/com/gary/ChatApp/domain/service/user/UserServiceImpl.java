@@ -3,6 +3,7 @@ package com.gary.ChatApp.domain.service.user;
 import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.repository.UserRepository;
 import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
+import com.gary.ChatApp.exceptions.DuplicateResourceException;
 import com.gary.ChatApp.exceptions.UnauthorizedException;
 import com.gary.ChatApp.security.JwtTokenUtil;
 import com.gary.ChatApp.web.dto.LoginResponse;
@@ -26,6 +27,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public String register(String username, String password) {
 
+        if (userRepository.findByName(username).isPresent()) {
+            throw new DuplicateResourceException("Username already exists");
+        }
+
         userRepository.save(User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
@@ -44,7 +49,14 @@ public class UserServiceImpl implements UserService {
         }
 
         String token = jwtTokenUtil.generateToken(user.getUsername());
-        return new LoginResponse(token, user.getUsername());
+
+        userPresenceService.setOnline(user.getId());
+
+        return LoginResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .token(token)
+                .build();
     }
 
 

@@ -1,4 +1,4 @@
-package com.gary.ChatApp.exceptions;
+package com.gary.ChatApp.interceptor;
 
 import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
 import jakarta.servlet.http.HttpServletRequest;
