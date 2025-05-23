@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("Invalid credentials");
         }
 
-        String token = jwtTokenUtil.generateToken(user.getUsername());
+        String token = jwtTokenUtil.generateToken(user.getId(), user.getUsername());
 
         userPresenceService.setOnline(user.getId());
 
