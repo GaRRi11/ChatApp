@@ -9,19 +9,31 @@ import java.util.Date;
 public class JwtTokenUtil {
 
     private final String jwtSecret = "yourSecretKeyHere";
-    private final long jwtExpirationMs = 86400000; // 24 hours
 
-    public String generateToken(Long userId, String username) {
-        long refreshExpirationMs = jwtExpirationMs * 7; // e.g., 7 days for refresh token
 
+    private final long accessTokenExpirationMs = 86400000; // 24 hours
+    private final long refreshTokenExpirationMs = accessTokenExpirationMs * 7; // 7 days
+
+    public String generateAccessToken(Long userId, String username) {
         return Jwts.builder()
                 .setSubject(username)
                 .claim("id", userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
+
+    public String generateRefreshToken(Long userId, String username) {
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("id", userId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))
+                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .compact();
+    }
+
 
     public Long extractUserId(String token) {
         return Long.valueOf(extractAllClaims(token).get("id").toString());

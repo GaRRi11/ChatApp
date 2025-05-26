@@ -5,7 +5,6 @@ import lombok.Builder;
 
 @Builder
 public record LoginResponse(
-        Long id,
         String token,
-        String username) {}
+        String refreshToken) {}
 

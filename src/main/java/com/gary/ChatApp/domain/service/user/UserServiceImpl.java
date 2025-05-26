@@ -23,6 +23,7 @@ public class UserServiceImpl implements UserService {
     private final UserPresenceService userPresenceService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public String register(String username, String password) {
@@ -48,14 +49,16 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("Invalid credentials");
         }
 
-        String token = jwtTokenUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtTokenUtil.generateAccessToken(user.getId(), user.getUsername());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getId(), user.getUsername());
+
+        refreshTokenService.save(user.getId(), refreshToken);
 
         userPresenceService.setOnline(user.getId());
 
         return LoginResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
                 .token(token)
+                .refreshToken(refreshToken)
                 .build();
     }
 
