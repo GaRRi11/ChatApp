@@ -8,6 +8,7 @@ import com.gary.ChatApp.exceptions.UnauthorizedException;
 import com.gary.ChatApp.security.JwtTokenUtil;
 import com.gary.ChatApp.web.dto.LoginResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -26,39 +28,82 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenService refreshTokenService;
 
     @Override
-    public String register(String username, String password) {
+    public void register(String username, String password) {
 
-        if (userRepository.findByName(username).isPresent()) {
+        log.info("Registering new user: {}", username);
+
+        userRepository.findByName(username).ifPresent(u -> {
+            log.warn("Username '{}' already exists", username);
             throw new DuplicateResourceException("Username already exists");
-        }
+        });
 
         userRepository.save(User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
                 .build());
 
-        return "User registered successfully";
+        log.info("User '{}' registered successfully", username);
+
     }
 
     @Override
     public LoginResponse login(String username, String password) {
+
+        log.info("Attempting login for user: {}", username);
+
         User user = userRepository.findByName(username)
-                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed: username '{}' not found", username);
+                    return new UnauthorizedException("Invalid credentials");
+                });
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            log.warn("Login failed: invalid password for user '{}'", username);
             throw new UnauthorizedException("Invalid credentials");
         }
 
-        String token = jwtTokenUtil.generateAccessToken(user.getId(), user.getUsername());
+        String accessToken = jwtTokenUtil.generateAccessToken(user.getId(), user.getUsername());
         String refreshToken = jwtTokenUtil.generateRefreshToken(user.getId(), user.getUsername());
 
         refreshTokenService.save(user.getId(), refreshToken);
 
-        userPresenceService.setOnline(user.getId());
+        log.info("User '{}' logged in successfully", username);
 
         return LoginResponse.builder()
-                .token(token)
+                .token(accessToken)
                 .refreshToken(refreshToken)
+                .build();
+    }
+
+
+    @Override
+    public LoginResponse refreshToken(String token) {
+
+        log.info("Refreshing access token");
+
+        if (!jwtTokenUtil.validateToken(token)) {
+            log.warn("Refresh token validation failed (invalid JWT)");
+            throw new UnauthorizedException("Invalid refresh token");
+        }
+
+        if (!refreshTokenService.isValid(token)) {
+            log.warn("Refresh token validation failed (expired or revoked)");
+            throw new UnauthorizedException("Invalid refresh token");
+        }
+
+        Long userId = jwtTokenUtil.extractUserId(token);
+        String username = jwtTokenUtil.extractUsername(token);
+
+        String newAccessToken = jwtTokenUtil.generateAccessToken(userId, username);
+        String newRefreshToken = jwtTokenUtil.generateRefreshToken(userId, username);
+
+        refreshTokenService.save(userId, newRefreshToken);
+
+        log.info("New tokens issued for user '{}'", username);
+
+        return LoginResponse.builder()
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken)
                 .build();
     }
 
@@ -77,22 +122,4 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    @Override
-    public void setOnlineStatus(Long userId, boolean online) {
-        if (online) {
-            userPresenceService.setOnline(userId);
-        } else {
-            userPresenceService.setOffline(userId);
-        }
-    }
-
-    @Override
-    public List<User> getOnlineUsers() {
-        // Redis doesn't store all keys in a searchable way by default,
-        // so we must get all users from DB and check each one's status.
-        return userRepository.findAll().stream()
-                .filter(user -> userPresenceService.isOnline(user.getId()))
-                .peek(user -> user.setOnline(true))
-                .collect(Collectors.toList());
-    }
 }

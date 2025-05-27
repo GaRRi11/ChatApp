@@ -1,38 +1,40 @@
 package com.gary.ChatApp.config;
 
 import com.gary.ChatApp.interceptor.JwtHandshakeInterceptor;
+import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 @Configuration
 @EnableWebSocketMessageBroker
-/*
-* Sets up your WebSocket messaging infrastructure using STOMP protocol.
-
- Registers /chat as the WebSocket connection URL.
-
-Adds your custom handshake interceptor to check JWT tokens during connection setup.
-
-*/
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
+    private final UserPresenceService userPresenceService;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Enables simple in-memory broker for topics and queues used in messaging.
-        // Sets the prefix clients will use when sending messages to the server.
         config.enableSimpleBroker("/topic", "/queue");
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Registers a WebSocket endpoint at /chat.
-        // Adds the JWT handshake interceptor to authenticate users at handshake.
-        // Enables SockJS fallback for browsers that don't support WebSocket.
         registry.addEndpoint("/chat")
-                .addInterceptors(new JwtHandshakeInterceptor()) // optional for production
+                .addInterceptors(jwtHandshakeInterceptor)
+                .setHandshakeHandler(new DefaultHandshakeHandler())
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
+    }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.addDecoratorFactory(handler -> new PresenceWebSocketHandlerDecorator(handler, userPresenceService));
     }
 }

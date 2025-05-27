@@ -9,6 +9,7 @@ import com.gary.ChatApp.web.dto.RespondToFriendRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,21 +24,29 @@ public class FriendRequestController {
     private final FriendshipService friendshipService;
 
     @PostMapping("/send")
-    public FriendRequestDto sendRequest(@RequestBody FriendRequestDto request) {
+    public ResponseEntity<FriendRequestDto> sendRequest(@RequestBody @Valid FriendRequestDto request) {
+        log.debug("Received sendRequest from user {} to {}", request.senderId(), request.receiverId());
+
         if (friendshipService.areFriends(request.senderId(), request.receiverId())) {
+            log.warn("Users {} and {} are already friends", request.senderId(), request.receiverId());
             throw new FriendshipAlreadyExistsException(request.senderId(), request.receiverId());
         }
-        return friendRequestService.sendRequest(request);
+
+        FriendRequestDto sentRequest = friendRequestService.sendRequest(request);
+        return ResponseEntity.ok(sentRequest);
     }
 
-    @PostMapping("/{id}/respond")
-    public void respondToRequest(@RequestBody @Valid RespondToFriendRequestDto responseDto) {
+    @PostMapping("/respond")
+    public ResponseEntity<Void> respondToRequest(@RequestBody @Valid RespondToFriendRequestDto responseDto) {
         log.debug("Received respondToRequest for requestId={}, accept={}", responseDto.requestId(), responseDto.accept());
         friendRequestService.respondToRequest(responseDto);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/pending/{userId}")
-    public List<FriendRequestDto> getPendingRequests(@PathVariable Long userId) {
-        return friendRequestService.getPendingRequests(userId);
+    public ResponseEntity<List<FriendRequestDto>> getPendingRequests(@PathVariable Long userId) {
+        log.debug("Fetching pending friend requests for userId={}", userId);
+        List<FriendRequestDto> pendingRequests = friendRequestService.getPendingRequests(userId);
+        return ResponseEntity.ok(pendingRequests);
     }
 }
