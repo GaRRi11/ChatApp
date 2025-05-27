@@ -6,6 +6,7 @@ import com.gary.ChatApp.domain.repository.FriendRequestRepository;
 import com.gary.ChatApp.domain.repository.FriendshipRepository;
 import com.gary.ChatApp.domain.service.friendship.FriendshipManager;
 import com.gary.ChatApp.web.dto.FriendRequestDto;
+import com.gary.ChatApp.web.dto.RespondToFriendRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,25 +23,30 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
 
     @Override
-    public FriendRequestDto sendRequest(Long senderId, Long receiverId) {
+    public FriendRequestDto sendRequest(FriendRequestDto friendRequestDto) {
+        log.info("Sending friend request from {} to {}", friendRequestDto.senderId(), friendRequestDto.receiverId());
         return FriendRequestDto.fromEntity(
                 friendRequestRepository.save(
                 FriendRequest.builder()
-                        .senderId(senderId)
-                        .receiverId(receiverId)
+                        .senderId(friendRequestDto.senderId())
+                        .receiverId(friendRequestDto.receiverId())
                         .status(RequestStatus.PENDING)
                         .build()));
     }
 
     @Override
-    public void respondToRequest(Long requestId, boolean accepted) {
-        FriendRequest request = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
+    public void respondToRequest(RespondToFriendRequestDto responseDto) {
 
-        request.setStatus(accepted ? RequestStatus.ACCEPTED : RequestStatus.DECLINED);
+        FriendRequest request = friendRequestRepository.findById(responseDto.requestId())
+                .orElseThrow(() -> {
+                    log.warn("Friend request not found for requestId={}", responseDto.requestId());
+                    return new IllegalArgumentException("Friend request not found");
+                });
+
+        request.setStatus(responseDto.accept() ? RequestStatus.ACCEPTED : RequestStatus.DECLINED);
         friendRequestRepository.save(request);
 
-        if (accepted) {
+        if (responseDto.accept()) {
             FriendshipManager.saveBidirectional(request.getSenderId(),request.getReceiverId(),friendshipRepository);
             log.info("Friend request accepted between {} and {}", request.getSenderId(), request.getReceiverId());
         }

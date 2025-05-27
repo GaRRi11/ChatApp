@@ -9,9 +9,11 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import java.time.LocalDateTime;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 
 @Controller
+@RequestMapping("/api/Chat")
 @RequiredArgsConstructor
 public class ChatWebSocketController {
 
