@@ -1,9 +1,11 @@
 package com.gary.ChatApp.web.controller;
 
+import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.service.friendship.FriendshipService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,22 +18,26 @@ public class FriendshipController {
 
     private final FriendshipService friendshipService;
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<Long>> getFriends(@PathVariable Long userId) {
-        if (userId == null || userId <= 0) {
-            log.warn("Invalid userId received in getFriends: {}", userId);
-            return ResponseEntity.badRequest().build();
-        }
+    @GetMapping
+    public ResponseEntity<List<Long>> getFriends(@AuthenticationPrincipal User authenticatedUser) {
+        Long userId = authenticatedUser.getId();
+
+        log.debug("Fetching friends for userId={}", userId);
         List<Long> friends = friendshipService.getFriendIds(userId);
         return ResponseEntity.ok(friends);
     }
 
-    @DeleteMapping("/{userId}/remove/{friendId}")
-    public ResponseEntity<Void> removeFriend(@PathVariable Long userId, @PathVariable Long friendId) {
-        if (userId == null || friendId == null || userId <= 0 || friendId <= 0) {
-            log.warn("Invalid userId or friendId received in removeFriend: userId={}, friendId={}", userId, friendId);
+    @DeleteMapping("/remove/{friendId}")
+    public ResponseEntity<Void> removeFriend(@AuthenticationPrincipal User authenticatedUser,
+                                             @PathVariable Long friendId) {
+        Long userId = authenticatedUser.getId();
+
+        if (friendId == null || friendId <= 0) {
+            log.warn("Invalid friendId received in removeFriend: {}", friendId);
             return ResponseEntity.badRequest().build();
         }
+
+        log.debug("User {} removing friend {}", userId, friendId);
         friendshipService.removeFriend(userId, friendId);
         return ResponseEntity.noContent().build();
     }

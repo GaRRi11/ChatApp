@@ -30,10 +30,4 @@ public class UserController {
                 .collect(Collectors.toList());
     }
 
-    @PatchMapping("/{id}/status")
-    public void setOnlineStatus(@PathVariable Long id, @RequestParam boolean online) {
-        userService.setOnlineStatus(id, online);
-    }
-
-
 }

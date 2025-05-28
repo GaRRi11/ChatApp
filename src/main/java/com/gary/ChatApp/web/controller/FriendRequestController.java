@@ -1,6 +1,7 @@
 package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
+import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.service.friendRequest.FriendRequestService;
 import com.gary.ChatApp.domain.service.friendship.FriendshipService;
 import com.gary.ChatApp.exceptions.FriendshipAlreadyExistsException;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,27 +26,47 @@ public class FriendRequestController {
     private final FriendshipService friendshipService;
 
     @PostMapping("/send")
-    public ResponseEntity<FriendRequestDto> sendRequest(@RequestBody @Valid FriendRequestDto request) {
-        log.debug("Received sendRequest from user {} to {}", request.senderId(), request.receiverId());
+    public ResponseEntity<FriendRequestDto> sendRequest(
+            @RequestBody @Valid FriendRequestDto request,
+            @AuthenticationPrincipal User authenticatedUser) {
 
-        if (friendshipService.areFriends(request.senderId(), request.receiverId())) {
-            log.warn("Users {} and {} are already friends", request.senderId(), request.receiverId());
-            throw new FriendshipAlreadyExistsException(request.senderId(), request.receiverId());
+        Long senderId = authenticatedUser.getId();
+
+        log.debug("User {} sending friend request to {}", senderId, request.receiverId());
+
+        if (friendshipService.areFriends(senderId, request.receiverId())) {
+            log.warn("Users {} and {} are already friends", senderId, request.receiverId());
+            throw new FriendshipAlreadyExistsException(senderId, request.receiverId());
         }
 
-        FriendRequestDto sentRequest = friendRequestService.sendRequest(request);
+        FriendRequestDto toSend = new FriendRequestDto(
+                senderId,
+                request.receiverId(),
+                request.status() // probably REQUESTED or PENDING
+        );
+
+        FriendRequestDto sentRequest = friendRequestService.sendRequest(toSend);
         return ResponseEntity.ok(sentRequest);
     }
 
     @PostMapping("/respond")
-    public ResponseEntity<Void> respondToRequest(@RequestBody @Valid RespondToFriendRequestDto responseDto) {
-        log.debug("Received respondToRequest for requestId={}, accept={}", responseDto.requestId(), responseDto.accept());
+    public ResponseEntity<Void> respondToRequest(
+            @RequestBody @Valid RespondToFriendRequestDto responseDto,
+            @AuthenticationPrincipal User authenticatedUser) {
+
+        log.debug("User {} responding to friend request id={}, accept={}",
+                authenticatedUser.getId(), responseDto.requestId(), responseDto.accept());
+
+        // Optionally, verify that the authenticated user is the receiver of the friend request here
         friendRequestService.respondToRequest(responseDto);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/pending/{userId}")
-    public ResponseEntity<List<FriendRequestDto>> getPendingRequests(@PathVariable Long userId) {
+    @GetMapping("/pending")
+    public ResponseEntity<List<FriendRequestDto>> getPendingRequests(
+            @AuthenticationPrincipal User authenticatedUser) {
+
+        Long userId = authenticatedUser.getId();
         log.debug("Fetching pending friend requests for userId={}", userId);
         List<FriendRequestDto> pendingRequests = friendRequestService.getPendingRequests(userId);
         return ResponseEntity.ok(pendingRequests);

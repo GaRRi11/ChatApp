@@ -22,15 +22,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final ChatCacheService chatCacheService;
 
     @Override
-    public ChatMessage sendMessage(Long senderId, Long receiverId, String content) {
-        if (!rateLimiterService.isAllowedToSend(senderId)) {
+    public ChatMessage sendMessage(ChatMessageDto chatMessageDto) {
+        if (!rateLimiterService.isAllowedToSend(chatMessageDto.senderId())) {
             throw new TooManyRequestsException("You're sending messages too quickly. Please wait.");
         }
 
         ChatMessage message = ChatMessage.builder()
-                .senderId(senderId)
-                .receiverId(receiverId)
-                .content(content)
+                .senderId(chatMessageDto.senderId())
+                .receiverId(chatMessageDto.receiverId())
+                .content(chatMessageDto.content())
                 .timestamp(LocalDateTime.now())
                 .build();
 

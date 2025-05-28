@@ -2,12 +2,13 @@ package com.gary.ChatApp.web.dto;
 
 import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
+@Builder
 public record ChatMessageDto(
-        @NotNull(message = "Sender ID must not be blank")
-        @PositiveOrZero(message = "Sender ID must be a positive number")
+
         Long senderId,
         @NotNull(message = "Receiver ID must not be blank")
         @PositiveOrZero(message = "Receiver ID must be a positive number")

@@ -1,5 +1,7 @@
 package com.gary.ChatApp.security;
 
+import com.gary.ChatApp.domain.model.user.User;
+import com.gary.ChatApp.domain.service.user.UserService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,20 +9,27 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
 
+    private static final String AUTH_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+
     private final JwtTokenUtil jwtTokenUtil;
+    private final UserService userService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -28,38 +37,63 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String header = request.getHeader("Authorization");
-
-        if (header == null || !header.startsWith("Bearer ")) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
-            return;
-        }
-
-        final String token = header.substring(7);
-
         try {
+            Optional<String> tokenOpt = extractToken(request);
+
+            if (tokenOpt.isEmpty()) {
+                // No token provided, continue without authentication (let Spring Security handle it)
+                log.debug("No JWT token found in request headers");
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String token = tokenOpt.get();
+
             if (!jwtTokenUtil.validateToken(token)) {
+                log.warn("Invalid or expired JWT token");
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
                 return;
             }
 
-
             Long userId = jwtTokenUtil.extractUserId(token);
-            String username = jwtTokenUtil.extractUsername(token);
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(username, null, null);
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
 
-            request.setAttribute("userId", userId);
-        } catch (JwtException | IllegalArgumentException e) {
-            // Log the issue and abort the chain
+            Optional<User> userOpt = userService.getById(userId);
+            if (userOpt.isEmpty()) {
+                log.warn("User not found with ID extracted from JWT token");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");
+                return;
+            }
+
+            User user = userOpt.get();
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            user,
+                            null,
+                            null
+                    );
+
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            log.debug("JWT authentication successful for user ID: {}", userId);
+
+        } catch (JwtException e) {
             log.warn("JWT processing failed: {}", e.getMessage());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or malformed token");
             return;
         }
 
-
         filterChain.doFilter(request, response);
+    }
+
+
+    private Optional<String> extractToken(HttpServletRequest request) {
+        String header = request.getHeader(AUTH_HEADER);
+        if (header == null || !header.startsWith(BEARER_PREFIX)) {
+            return Optional.empty();
+        }
+        return Optional.of(header.substring(BEARER_PREFIX.length()));
     }
 }
