@@ -11,13 +11,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ChatMessageServiceImpl implements ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final RateLimiterService rateLimiterService;
-    private final ChatCacheService chatCacheService; // 👈 Add this
+    private final ChatCacheService chatCacheService;
 
     @Override
     public ChatMessage sendMessage(Long senderId, Long receiverId, String content) {
@@ -34,7 +36,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         ChatMessage savedMessage = chatMessageRepository.save(message);
 
-        chatCacheService.cacheMessage(ChatMessageDto.fromEntity(savedMessage)); // 👈 Cache it in Redis too
+        chatCacheService.cacheMessage(ChatMessageDto.fromEntity(savedMessage));
 
         return savedMessage;
     }
@@ -42,5 +44,26 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Override
     public List<ChatMessage> getChatHistory(Long user1Id, Long user2Id) {
         return chatMessageRepository.findChatBetweenUsers(user1Id, user2Id);
+    }
+
+    // New method returning DTOs and using cache
+    public List<ChatMessageDto> getChatHistoryDto(Long user1Id, Long user2Id) {
+        List<Object> cached = chatCacheService.getCachedMessages(user1Id, user2Id);
+
+        if (cached != null && !cached.isEmpty()) {
+            return cached.stream()
+                    .map(obj -> (ChatMessageDto) obj)
+                    .collect(Collectors.toList());
+        }
+
+        // Cache miss fallback to DB
+        List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id);
+
+        // Cache all fetched messages
+        messages.forEach(msg -> chatCacheService.cacheMessage(ChatMessageDto.fromEntity(msg)));
+
+        return messages.stream()
+                .map(ChatMessageDto::fromEntity)
+                .collect(Collectors.toList());
     }
 }

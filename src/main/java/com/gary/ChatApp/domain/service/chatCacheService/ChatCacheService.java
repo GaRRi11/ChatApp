@@ -23,7 +23,7 @@ public class ChatCacheService {
     }
 
     public void cacheMessage(ChatMessageDto message) {
-        String key = generateKey(message.getSenderId(), message.getReceiverId());
+        String key = generateKey(message.senderId(), message.receiverId());
         redisTemplate.opsForList().rightPush(key, message);
         redisTemplate.expire(key, Duration.ofHours(6));
     }
