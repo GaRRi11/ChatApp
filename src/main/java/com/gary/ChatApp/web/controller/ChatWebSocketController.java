@@ -1,27 +1,23 @@
 package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.domain.service.chatMessage.ChatMessageService;
-import com.gary.ChatApp.domain.service.user.UserService;
-import com.gary.ChatApp.web.dto.ChatMessageDto;
+import com.gary.ChatApp.domain.service.chat.ChatMessageService;
+import com.gary.ChatApp.web.dto.chatMessage.ChatMessageRequest;
+import com.gary.ChatApp.web.dto.chatMessage.ChatMessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.http.ResponseEntity;
-
-import java.security.Principal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/api/chat")
@@ -32,53 +28,54 @@ public class ChatWebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageService chatMessageService;
 
+
     @MessageMapping("/send")
-    public void sendMessage(
-            @Payload @Valid ChatMessageDto message,
+    @SendToUser("/queue/confirm")
+    public ChatMessageResponse sendMessage(
+            @Payload @Valid ChatMessageRequest request,
             @AuthenticationPrincipal User user) {
 
-        if (message.receiverId() == null || message.content() == null) {
-            log.warn("Invalid chat message received: {}", message);
-            return;
+        if (user == null) {
+            log.warn("Unauthorized attempt to send a chat message");
+            return null;
         }
 
+        try {
+            ChatMessageResponse response = chatMessageService.sendMessage(request, user.getId());
 
-        Long senderId = user.getId();
+            messagingTemplate.convertAndSendToUser(
+                    request.receiverId().toString(),
+                    "/queue/messages",
+                    response
+            );
 
-        ChatMessageDto updatedDto = ChatMessageDto.builder().
-                senderId(senderId)
-                .receiverId(message.receiverId())
-                .content(message.content())
-                .build();
+            log.info("User {} sent message to user {}: {}", user.getId(), request.receiverId(), response.content());
+            return response;
 
-        // Save and cache message, returns saved entity
-        var savedMessage = chatMessageService.sendMessage(updatedDto);
-
-        var dtoToSend = ChatMessageDto.fromEntity(savedMessage);
-
-        // Send message to receiver's personal queue
-        messagingTemplate.convertAndSendToUser(
-                updatedDto.receiverId().toString(),
-                "/queue/messages",
-                dtoToSend
-        );
+        } catch (Exception e) {
+            log.error("Failed to send chat message from user {} to user {}: {}", user.getId(), request.receiverId(), e.getMessage(), e);
+            return null;
+        }
     }
 
-    /**
-     * Example HTTP GET endpoint to fetch chat history with cache usage.
-     * Could also be adapted for WebSocket if needed.
-     */
+
+
     @GetMapping("/history")
-    public ResponseEntity<List<ChatMessageDto>> getChatHistory(
+    public ResponseEntity<List<ChatMessageResponse>> getChatHistory(
             @RequestParam Long user1Id,
             @RequestParam Long user2Id) {
 
-        if (user1Id == null || user2Id == null || user1Id <= 0 || user2Id <= 0) {
+        if (user1Id == null || user1Id <= 0 || user2Id == null || user2Id <= 0) {
+            log.warn("Invalid user IDs provided for chat history: user1Id={}, user2Id={}", user1Id, user2Id);
             return ResponseEntity.badRequest().build();
         }
 
-        List<ChatMessageDto> messages = chatMessageService.getChatHistory(user1Id, user2Id);
-
-        return ResponseEntity.ok(messages);
+        try {
+            List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user1Id, user2Id);
+            return ResponseEntity.ok(messages);
+        } catch (Exception e) {
+            log.error("Error fetching chat history between users {} and {}: {}", user1Id, user2Id, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

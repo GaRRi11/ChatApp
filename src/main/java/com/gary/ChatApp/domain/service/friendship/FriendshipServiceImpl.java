@@ -1,8 +1,11 @@
 package com.gary.ChatApp.domain.service.friendship;
 
 import com.gary.ChatApp.domain.model.friendship.Friendship;
+import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.repository.FriendshipRepository;
-import com.gary.ChatApp.domain.service.chatCacheService.ChatCacheService;
+import com.gary.ChatApp.domain.service.cache.ChatCacheService;
+import com.gary.ChatApp.domain.service.user.UserService;
+import com.gary.ChatApp.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,12 +20,19 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
     private final ChatCacheService chatCacheService; // 👈 Add this
+    private final UserService userService;
 
 
     @Override
-    public List<Long> getFriendIds(Long userId) {
-        return friendshipRepository.findByUserId(userId).stream()
+    public List<UserResponse> getFriends(Long userId) {
+        List<Long> friendIds = friendshipRepository.findByUserId(userId).stream()
                 .map(Friendship::getFriendId)
+                .collect(Collectors.toList());
+
+        List<User> friends = userService.findAllById(friendIds);
+
+        return friends.stream()
+                .map(UserResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 

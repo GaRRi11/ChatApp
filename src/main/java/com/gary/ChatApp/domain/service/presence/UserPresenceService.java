@@ -1,4 +1,4 @@
-package com.gary.ChatApp.domain.service.userPresenceService;
+package com.gary.ChatApp.domain.service.presence;
 
 import org.springframework.stereotype.Service;
 

@@ -3,6 +3,8 @@ package com.gary.ChatApp.domain.model.user;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -22,6 +24,10 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
 
     @Transient
     private boolean online;

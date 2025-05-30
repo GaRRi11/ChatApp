@@ -2,6 +2,7 @@ package com.gary.ChatApp.web.controller;
 
 import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.service.friendship.FriendshipService;
+import com.gary.ChatApp.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +20,11 @@ public class FriendshipController {
     private final FriendshipService friendshipService;
 
     @GetMapping
-    public ResponseEntity<List<Long>> getFriends(@AuthenticationPrincipal User authenticatedUser) {
+    public ResponseEntity<List<UserResponse>> getFriends(@AuthenticationPrincipal User authenticatedUser) {
         Long userId = authenticatedUser.getId();
 
         log.debug("Fetching friends for userId={}", userId);
-        List<Long> friends = friendshipService.getFriendIds(userId);
+        List<UserResponse> friends = friendshipService.getFriends(userId);
         return ResponseEntity.ok(friends);
     }
 

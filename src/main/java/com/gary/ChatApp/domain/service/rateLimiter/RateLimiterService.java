@@ -1,4 +1,4 @@
-package com.gary.ChatApp.domain.service.rateLimiterService;
+package com.gary.ChatApp.domain.service.rateLimiter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;

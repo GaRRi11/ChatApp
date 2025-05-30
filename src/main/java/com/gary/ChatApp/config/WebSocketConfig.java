@@ -1,15 +1,13 @@
 package com.gary.ChatApp.config;
 
-import com.gary.ChatApp.interceptor.JwtHandshakeInterceptor;
-import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
-import com.gary.ChatApp.interceptor.PingMessageInterceptor;
+import com.gary.ChatApp.infrastructure.websocket.JwtHandshakeInterceptor;
+import com.gary.ChatApp.domain.service.presence.UserPresenceService;
+import com.gary.ChatApp.infrastructure.websocket.PingMessageInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.*;
-import org.springframework.web.socket.server.HandshakeInterceptor;
-import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -28,16 +26,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/chat")
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins("https://yourdomain.com") // restrict for production
                 .addInterceptors(jwtHandshakeInterceptor)
-                .setHandshakeHandler(new DefaultHandshakeHandler())
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+                .withSockJS();  // optional SockJS fallback
+
     }
 
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
-        registration.addDecoratorFactory(handler -> new PresenceWebSocketHandlerDecorator(handler, userPresenceService));
+        registration.addDecoratorFactory(handler -> new WebSocketHandlerConfig(handler, userPresenceService));
     }
 
     @Override

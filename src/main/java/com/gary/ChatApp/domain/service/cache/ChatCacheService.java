@@ -1,6 +1,6 @@
-package com.gary.ChatApp.domain.service.chatCacheService;
+package com.gary.ChatApp.domain.service.cache;
 
-import com.gary.ChatApp.web.dto.ChatMessageDto;
+import com.gary.ChatApp.web.dto.chatMessage.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class ChatCacheService {
         return MESSAGE_KEY_PREFIX + first + ":" + second;
     }
 
-    public void cacheMessage(ChatMessageDto message) {
+    public void cacheMessage(ChatMessageResponse message) {
         String key = generateKey(message.senderId(), message.receiverId());
         redisTemplate.opsForList().rightPush(key, message);
         redisTemplate.expire(key, Duration.ofHours(6));

@@ -2,19 +2,20 @@ package com.gary.ChatApp.domain.service.user;
 
 import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.repository.UserRepository;
-import com.gary.ChatApp.domain.service.userPresenceService.UserPresenceService;
+import com.gary.ChatApp.domain.service.presence.UserPresenceService;
 import com.gary.ChatApp.exceptions.DuplicateResourceException;
 import com.gary.ChatApp.exceptions.UnauthorizedException;
-import com.gary.ChatApp.security.JwtTokenUtil;
+import com.gary.ChatApp.infrastructure.security.JwtTokenUtil;
 import com.gary.ChatApp.web.dto.LoginResponse;
+import com.gary.ChatApp.web.dto.user.UserRequest;
+import com.gary.ChatApp.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,37 +29,40 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenService refreshTokenService;
 
     @Override
-    public void register(String username, String password) {
+    public UserResponse register(UserRequest userRequest) {
 
-        log.info("Registering new user: {}", username);
+        log.info("Registering new user: {}", userRequest.username());
 
-        userRepository.findByName(username).ifPresent(u -> {
-            log.warn("Username '{}' already exists", username);
+        userRepository.findByName(userRequest.username()).ifPresent(u -> {
+            log.warn("Username '{}' already exists", userRequest.username());
             throw new DuplicateResourceException("Username already exists");
         });
 
-        userRepository.save(User.builder()
-                .username(username)
-                .password(passwordEncoder.encode(password))
+        User user = userRepository.save(User.builder()
+                .username(userRequest.username())
+                .password(passwordEncoder.encode(userRequest.password()))
                 .build());
 
-        log.info("User '{}' registered successfully", username);
+        UserResponse userResponse = UserResponse.fromEntity(user);
 
+        log.info("User '{}' registered successfully", userRequest.username());
+
+        return userResponse;
     }
 
     @Override
-    public LoginResponse login(String username, String password) {
+    public LoginResponse login(UserRequest userRequest) {
 
-        log.info("Attempting login for user: {}", username);
+        log.info("Attempting login for user: {}", userRequest.username());
 
-        User user = userRepository.findByName(username)
+        User user = userRepository.findByName(userRequest.username())
                 .orElseThrow(() -> {
-                    log.warn("Login failed: username '{}' not found", username);
+                    log.warn("Login failed: username '{}' not found", userRequest.username());
                     return new UnauthorizedException("Invalid credentials");
                 });
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            log.warn("Login failed: invalid password for user '{}'", username);
+        if (!passwordEncoder.matches(userRequest.password(), user.getPassword())) {
+            log.warn("Login failed: invalid password for user '{}'", userRequest.username());
             throw new UnauthorizedException("Invalid credentials");
         }
 
@@ -67,7 +71,7 @@ public class UserServiceImpl implements UserService {
 
         refreshTokenService.save(user.getId(), refreshToken);
 
-        log.info("User '{}' logged in successfully", username);
+        log.info("User '{}' logged in successfully", userRequest.username());
 
         return LoginResponse.builder()
                 .token(accessToken)
@@ -116,10 +120,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> getByName(String name) {
-        Optional<User> user = userRepository.findByName(name);
-        user.ifPresent(u -> u.setOnline(userPresenceService.isOnline(u.getId())));
-        return user;
+    public List<User> findAllById(List<Long> userIds) {
+        List<User> users = userRepository.findAllById(userIds);
+
+        // Update online status for each user
+        users.forEach(user -> user.setOnline(userPresenceService.isOnline(user.getId())));
+
+        return users;
     }
+
 
 }

@@ -3,6 +3,8 @@ package com.gary.ChatApp.domain.model.friendrequest;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "friend_requests")
 @Getter
@@ -25,4 +27,8 @@ public class FriendRequest {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RequestStatus status;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
 }

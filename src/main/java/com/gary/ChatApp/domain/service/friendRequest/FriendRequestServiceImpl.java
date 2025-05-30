@@ -6,8 +6,9 @@ import com.gary.ChatApp.domain.repository.FriendRequestRepository;
 import com.gary.ChatApp.domain.repository.FriendshipRepository;
 import com.gary.ChatApp.domain.service.friendship.FriendshipManager;
 import com.gary.ChatApp.exceptions.FriendRequestNotFoundException;
-import com.gary.ChatApp.web.dto.FriendRequestDto;
-import com.gary.ChatApp.web.dto.RespondToFriendRequestDto;
+import com.gary.ChatApp.web.dto.FriendRequestCreate;
+import com.gary.ChatApp.web.dto.RespondToFriendDto;
+import com.gary.ChatApp.web.dto.friendRequest.FriendRequestResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,26 +25,36 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
 
     @Override
-    public FriendRequestDto sendRequest(FriendRequestDto dto) {
-        log.info("Processing friend request from {} to {}", dto.senderId(), dto.receiverId());
+    public FriendRequestResponse sendRequest(FriendRequestCreate request, Long senderId) {
+
+        log.info("Processing friend request from {} to {}", senderId, request.receiverId());
 
         FriendRequest newRequest = FriendRequest.builder()
-                .senderId(dto.senderId())
-                .receiverId(dto.receiverId())
+                .senderId(senderId)
+                .receiverId(request.receiverId())
                 .status(RequestStatus.PENDING)
                 .build();
 
         FriendRequest saved = friendRequestRepository.save(newRequest);
-        return FriendRequestDto.fromEntity(saved);
+
+        FriendRequestResponse response = FriendRequestResponse.fromEntity(saved);
+
+        return response;
     }
 
     @Override
-    public void respondToRequest(RespondToFriendRequestDto dto) {
+    public void respondToRequest(RespondToFriendDto dto, Long userId) {
         FriendRequest request = friendRequestRepository.findById(dto.requestId())
                 .orElseThrow(() -> {
                     log.warn("Friend request not found for ID {}", dto.requestId());
                     return new FriendRequestNotFoundException(dto.requestId());
                 });
+
+        if (!request.getReceiverId().equals(userId)) {
+            log.warn("User {} is not authorized to respond to friend request {}", userId, dto.requestId());
+            throw new AccessDeniedException("You are not authorized to respond to this friend request");
+        }
+
 
         RequestStatus newStatus = dto.accept() ? RequestStatus.ACCEPTED : RequestStatus.DECLINED;
         request.setStatus(newStatus);
@@ -58,10 +69,10 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
     @Override
-    public List<FriendRequestDto> getPendingRequests(Long userId) {
+    public List<FriendRequestResponse> getPendingRequests(Long userId) {
         log.debug("Fetching pending friend requests for userId={}", userId);
         return friendRequestRepository.findByReceiverIdAndStatus(userId, RequestStatus.PENDING).stream()
-                .map(FriendRequestDto::fromEntity)  // convert each entity to DTO
+                .map(FriendRequestResponse::fromEntity)  // convert each entity to DTO
                 .toList();  // collect as List<FriendRequestDto>
     }
 }

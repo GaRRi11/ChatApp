@@ -1,4 +1,4 @@
-package com.gary.ChatApp.security;
+package com.gary.ChatApp.infrastructure.security;
 
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
