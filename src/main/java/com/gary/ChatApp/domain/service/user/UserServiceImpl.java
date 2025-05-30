@@ -6,7 +6,7 @@ import com.gary.ChatApp.domain.service.presence.UserPresenceService;
 import com.gary.ChatApp.exceptions.DuplicateResourceException;
 import com.gary.ChatApp.exceptions.UnauthorizedException;
 import com.gary.ChatApp.infrastructure.security.JwtTokenUtil;
-import com.gary.ChatApp.web.dto.LoginResponse;
+import com.gary.ChatApp.web.dto.loginResponse.LoginResponseDto;
 import com.gary.ChatApp.web.dto.user.UserRequest;
 import com.gary.ChatApp.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public LoginResponse login(UserRequest userRequest) {
+    public LoginResponseDto login(UserRequest userRequest) {
 
         log.info("Attempting login for user: {}", userRequest.username());
 
@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("User '{}' logged in successfully", userRequest.username());
 
-        return LoginResponse.builder()
+        return LoginResponseDto.builder()
                 .token(accessToken)
                 .refreshToken(refreshToken)
                 .build();
@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public LoginResponse refreshToken(String token) {
+    public LoginResponseDto refreshToken(String token) {
 
         log.info("Refreshing access token");
 
@@ -105,7 +105,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("New tokens issued for user '{}'", username);
 
-        return LoginResponse.builder()
+        return LoginResponseDto.builder()
                 .token(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .build();

@@ -1,4 +1,4 @@
-package com.gary.ChatApp.web.dto;
+package com.gary.ChatApp.web.dto.respondToFriendDto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;

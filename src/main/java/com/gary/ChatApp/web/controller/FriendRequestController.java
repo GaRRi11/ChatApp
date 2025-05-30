@@ -1,12 +1,10 @@
 package com.gary.ChatApp.web.controller;
 
-import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
 import com.gary.ChatApp.domain.model.user.User;
 import com.gary.ChatApp.domain.service.friendRequest.FriendRequestService;
 import com.gary.ChatApp.domain.service.friendship.FriendshipService;
 import com.gary.ChatApp.exceptions.FriendshipAlreadyExistsException;
-import com.gary.ChatApp.web.dto.FriendRequestCreate;
-import com.gary.ChatApp.web.dto.RespondToFriendDto;
+import com.gary.ChatApp.web.dto.respondToFriendDto.RespondToFriendDto;
 import com.gary.ChatApp.web.dto.friendRequest.FriendRequestResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -29,19 +26,19 @@ public class FriendRequestController {
 
     @PostMapping("/send")
     public ResponseEntity<FriendRequestResponse> sendRequest(
-            @RequestBody @Valid FriendRequestCreate request,
+            @RequestParam Long receiverId,
             @AuthenticationPrincipal User authenticatedUser) {
 
         Long senderId = authenticatedUser.getId();
 
-        log.debug("User {} sending friend request to {}", senderId, request.receiverId());
+        log.debug("User {} sending friend request to {}", senderId, receiverId);
 
-        if (friendshipService.areFriends(senderId, request.receiverId())) {
-            log.warn("Users {} and {} are already friends", senderId, request.receiverId());
-            throw new FriendshipAlreadyExistsException(senderId, request.receiverId());
+        if (friendshipService.areFriends(senderId, receiverId)) {
+            log.warn("Users {} and {} are already friends", senderId, receiverId);
+            throw new FriendshipAlreadyExistsException(senderId, receiverId);
         }
 
-        FriendRequestResponse sentRequest = friendRequestService.sendRequest(request, senderId);
+        FriendRequestResponse sentRequest = friendRequestService.sendRequest(senderId, receiverId);
         return ResponseEntity.ok(sentRequest);
     }
 

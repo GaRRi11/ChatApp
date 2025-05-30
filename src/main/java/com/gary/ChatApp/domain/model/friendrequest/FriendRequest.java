@@ -31,4 +31,8 @@ public class FriendRequest {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "responded_at")
+    private LocalDateTime respondedAt;
+
+
 }

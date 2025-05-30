@@ -1,10 +1,10 @@
-package com.gary.ChatApp.web.dto;
+package com.gary.ChatApp.web.dto.loginResponse;
 
 
 import lombok.Builder;
 
 @Builder
-public record LoginResponse(
+public record LoginResponseDto(
         String token,
         String refreshToken) {}
 

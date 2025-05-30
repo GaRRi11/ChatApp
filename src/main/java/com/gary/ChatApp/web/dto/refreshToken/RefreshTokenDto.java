@@ -1,4 +1,4 @@
-package com.gary.ChatApp.web.dto;
+package com.gary.ChatApp.web.dto.refreshToken;
 
 import jakarta.validation.constraints.NotBlank;
 

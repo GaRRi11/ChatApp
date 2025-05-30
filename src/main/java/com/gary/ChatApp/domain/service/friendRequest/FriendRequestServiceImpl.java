@@ -6,13 +6,13 @@ import com.gary.ChatApp.domain.repository.FriendRequestRepository;
 import com.gary.ChatApp.domain.repository.FriendshipRepository;
 import com.gary.ChatApp.domain.service.friendship.FriendshipManager;
 import com.gary.ChatApp.exceptions.FriendRequestNotFoundException;
-import com.gary.ChatApp.web.dto.FriendRequestCreate;
-import com.gary.ChatApp.web.dto.RespondToFriendDto;
+import com.gary.ChatApp.web.dto.respondToFriendDto.RespondToFriendDto;
 import com.gary.ChatApp.web.dto.friendRequest.FriendRequestResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,13 +25,13 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
 
     @Override
-    public FriendRequestResponse sendRequest(FriendRequestCreate request, Long senderId) {
+    public FriendRequestResponse sendRequest(Long senderId,  Long receiverId) {
 
-        log.info("Processing friend request from {} to {}", senderId, request.receiverId());
+        log.info("Processing friend request from {} to {}", senderId, receiverId);
 
         FriendRequest newRequest = FriendRequest.builder()
                 .senderId(senderId)
-                .receiverId(request.receiverId())
+                .receiverId(receiverId)
                 .status(RequestStatus.PENDING)
                 .build();
 
@@ -58,6 +58,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         RequestStatus newStatus = dto.accept() ? RequestStatus.ACCEPTED : RequestStatus.DECLINED;
         request.setStatus(newStatus);
+        request.setRespondedAt(LocalDateTime.now());
         friendRequestRepository.save(request);
 
         if (newStatus == RequestStatus.ACCEPTED) {

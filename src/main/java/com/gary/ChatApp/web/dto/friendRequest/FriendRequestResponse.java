@@ -11,7 +11,9 @@ public record FriendRequestResponse(
         Long senderId,
         Long receiverId,
         RequestStatus status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime respondedAt
+
 ) {
     public static FriendRequestResponse fromEntity(com.gary.ChatApp.domain.model.friendrequest.FriendRequest entity) {
         return new FriendRequestResponse(
@@ -19,7 +21,8 @@ public record FriendRequestResponse(
                 entity.getSenderId(),
                 entity.getReceiverId(),
                 entity.getStatus(),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getRespondedAt()
         );
     }
 }
