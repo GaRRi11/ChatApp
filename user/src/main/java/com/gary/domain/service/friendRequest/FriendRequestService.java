@@ -1,7 +1,7 @@
 package com.gary.domain.service.friendRequest;
 
-import com.gary.ChatApp.web.dto.respondToFriendDto.RespondToFriendDto;
-import com.gary.ChatApp.web.dto.friendRequest.FriendRequestResponse;
+import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
+import com.gary.web.dto.friendRequest.FriendRequestResponse;
 
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.gary.domain.repository;
 
-import com.gary.ChatApp.domain.model.friendship.Friendship;
+import com.gary.domain.model.friendship.Friendship;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,5 +14,4 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     void deleteByUserIdAndFriendId(Long userId, Long friendId);
 
-    void deleteByFriendIdAndUserId(Long friendId, Long userId);
 }

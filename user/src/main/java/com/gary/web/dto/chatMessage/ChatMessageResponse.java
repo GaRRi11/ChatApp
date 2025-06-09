@@ -1,6 +1,6 @@
 package com.gary.web.dto.chatMessage;
 
-import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
+import com.gary.domain.model.chatmessage.ChatMessage;
 import lombok.Builder;
 
 import java.time.LocalDateTime;

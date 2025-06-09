@@ -1,6 +1,6 @@
 package com.gary.infrastructure.websocket;
 
-import com.gary.ChatApp.domain.service.presence.UserPresenceService;
+import com.gary.domain.service.presence.UserPresenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;

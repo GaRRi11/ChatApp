@@ -1,6 +1,8 @@
 package com.gary.domain.service.cache;
 
-import com.gary.ChatApp.web.dto.chatMessage.ChatMessageResponse;
+
+import com.gary.config.RedisKeys;
+import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,30 +14,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatCacheService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-
-    private static final String MESSAGE_KEY_PREFIX = "chat:messages:";
-
-    private String generateKey(Long senderId, Long receiverId) {
-        Long first = Math.min(senderId, receiverId);
-        Long second = Math.max(senderId, receiverId);
-        return MESSAGE_KEY_PREFIX + first + ":" + second;
-    }
+    private final RedisTemplate<String, ChatMessageResponse> chatMessageRedisTemplate;
+    private static final Duration MESSAGE_EXPIRATION = Duration.ofHours(6);
 
     public void cacheMessage(ChatMessageResponse message) {
-        String key = generateKey(message.senderId(), message.receiverId());
-        redisTemplate.opsForList().rightPush(key, message);
-        redisTemplate.expire(key, Duration.ofHours(6));
+        String key = RedisKeys.chatMessages(message.senderId(), message.receiverId());
+        chatMessageRedisTemplate.opsForList().rightPush(key, message);
+        chatMessageRedisTemplate.expire(key, MESSAGE_EXPIRATION);
     }
 
-    public List<Object> getCachedMessages(Long senderId, Long receiverId) {
-        String key = generateKey(senderId, receiverId);
-        return redisTemplate.opsForList().range(key, 0, -1);
+    public List<ChatMessageResponse> getCachedMessages(Long user1Id, Long user2Id) {
+        String key = RedisKeys.chatMessages(user1Id, user2Id);
+        return chatMessageRedisTemplate.opsForList().range(key, 0, -1);
     }
 
-    public void evictChatCache(Long senderId, Long receiverId) {
-        String key = generateKey(senderId, receiverId);
-        redisTemplate.delete(key);
+    public void evictChatCache(Long user1Id, Long user2Id) {
+        chatMessageRedisTemplate.delete(RedisKeys.chatMessages(user1Id, user2Id));
     }
-
 }

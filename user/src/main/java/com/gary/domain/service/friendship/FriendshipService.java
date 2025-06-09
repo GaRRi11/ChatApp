@@ -1,6 +1,6 @@
 package com.gary.domain.service.friendship;
 
-import com.gary.ChatApp.web.dto.user.UserResponse;
+import com.gary.web.dto.user.UserResponse;
 
 import java.util.List;
 

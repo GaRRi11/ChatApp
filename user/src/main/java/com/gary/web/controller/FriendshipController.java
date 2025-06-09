@@ -1,8 +1,8 @@
 package com.gary.web.controller;
 
-import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.domain.service.friendship.FriendshipService;
-import com.gary.ChatApp.web.dto.user.UserResponse;
+import com.gary.domain.model.user.User;
+import com.gary.domain.service.friendship.FriendshipService;
+import com.gary.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

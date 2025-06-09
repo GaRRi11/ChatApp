@@ -1,8 +1,9 @@
 package com.gary.infrastructure.websocket;
 
-import com.gary.ChatApp.infrastructure.security.JwtTokenUtil;
+import com.gary.infrastructure.security.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;

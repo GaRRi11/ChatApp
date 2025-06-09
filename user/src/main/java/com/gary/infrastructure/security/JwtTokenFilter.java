@@ -1,7 +1,7 @@
 package com.gary.infrastructure.security;
 
-import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.domain.service.user.UserService;
+import com.gary.domain.model.user.User;
+import com.gary.domain.service.user.UserService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
 
@@ -28,6 +27,11 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final JwtTokenUtil jwtTokenUtil;
     private final UserService userService;
+
+    public JwtTokenFilter(JwtTokenUtil jwtTokenUtil, UserService userService) {
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.userService = userService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

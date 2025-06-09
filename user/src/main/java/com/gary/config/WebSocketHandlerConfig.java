@@ -1,6 +1,6 @@
 package com.gary.config;
 
-import com.gary.ChatApp.domain.service.presence.UserPresenceService;
+import com.gary.domain.service.presence.UserPresenceService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;

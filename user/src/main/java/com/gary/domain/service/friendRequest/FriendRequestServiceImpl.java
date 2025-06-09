@@ -1,15 +1,16 @@
 package com.gary.domain.service.friendRequest;
 
-import com.gary.ChatApp.domain.model.friendrequest.FriendRequest;
-import com.gary.ChatApp.domain.model.friendrequest.RequestStatus;
-import com.gary.ChatApp.domain.repository.FriendRequestRepository;
-import com.gary.ChatApp.domain.repository.FriendshipRepository;
-import com.gary.ChatApp.domain.service.friendship.FriendshipManager;
-import com.gary.ChatApp.exceptions.FriendRequestNotFoundException;
-import com.gary.ChatApp.web.dto.respondToFriendDto.RespondToFriendDto;
-import com.gary.ChatApp.web.dto.friendRequest.FriendRequestResponse;
+import com.gary.domain.model.friendrequest.FriendRequest;
+import com.gary.domain.model.friendrequest.RequestStatus;
+import com.gary.domain.repository.FriendRequestRepository;
+import com.gary.domain.repository.FriendshipRepository;
+import com.gary.domain.service.friendship.FriendshipManager;
+import com.gary.exceptions.FriendRequestNotFoundException;
+import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
+import com.gary.web.dto.friendRequest.FriendRequestResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

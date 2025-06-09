@@ -1,12 +1,12 @@
 package com.gary.domain.service.chat;
 
-import com.gary.ChatApp.domain.model.chatmessage.ChatMessage;
-import com.gary.ChatApp.domain.repository.ChatMessageRepository;
-import com.gary.ChatApp.domain.service.cache.ChatCacheService;
-import com.gary.ChatApp.domain.service.rateLimiter.RateLimiterService;
-import com.gary.ChatApp.exceptions.TooManyRequestsException;
-import com.gary.ChatApp.web.dto.chatMessage.ChatMessageRequest;
-import com.gary.ChatApp.web.dto.chatMessage.ChatMessageResponse;
+import com.gary.domain.model.chatmessage.ChatMessage;
+import com.gary.domain.repository.ChatMessageRepository;
+import com.gary.domain.service.cache.ChatCacheService;
+import com.gary.domain.service.rateLimiter.RateLimiterService;
+import com.gary.exceptions.TooManyRequestsException;
+import com.gary.web.dto.chatMessage.ChatMessageRequest;
+import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -37,27 +37,21 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .build();
 
         ChatMessage saved = chatMessageRepository.save(message);
-
         ChatMessageResponse response = ChatMessageResponse.fromEntity(saved);
-        chatCacheService.cacheMessage(response);
 
+        chatCacheService.cacheMessage(response);
         return response;
     }
 
-
-
     @Override
     public List<ChatMessageResponse> getChatHistory(Long user1Id, Long user2Id) {
-        List<Object> cached = chatCacheService.getCachedMessages(user1Id, user2Id);
+        List<ChatMessageResponse> cachedMessages = chatCacheService.getCachedMessages(user1Id, user2Id);
 
-        if (cached != null && !cached.isEmpty()) {
-            return cached.stream()
-                    .map(obj -> (ChatMessageResponse) obj)
-                    .collect(Collectors.toList());
+        if (cachedMessages != null && !cachedMessages.isEmpty()) {
+            return cachedMessages;
         }
 
         List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id);
-
         List<ChatMessageResponse> responses = messages.stream()
                 .map(ChatMessageResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -66,4 +60,5 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         return responses;
     }
+
 }

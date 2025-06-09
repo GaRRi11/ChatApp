@@ -1,11 +1,11 @@
 package com.gary.web.controller;
 
-import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.domain.service.friendRequest.FriendRequestService;
-import com.gary.ChatApp.domain.service.friendship.FriendshipService;
-import com.gary.ChatApp.exceptions.FriendshipAlreadyExistsException;
-import com.gary.ChatApp.web.dto.respondToFriendDto.RespondToFriendDto;
-import com.gary.ChatApp.web.dto.friendRequest.FriendRequestResponse;
+import com.gary.domain.model.user.User;
+import com.gary.domain.service.friendRequest.FriendRequestService;
+import com.gary.domain.service.friendship.FriendshipService;
+import com.gary.exceptions.FriendshipAlreadyExistsException;
+import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
+import com.gary.web.dto.friendRequest.FriendRequestResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

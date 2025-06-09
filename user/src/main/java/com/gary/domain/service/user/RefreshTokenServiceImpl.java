@@ -1,7 +1,7 @@
 package com.gary.domain.service.user;
 
-import com.gary.ChatApp.domain.model.user.RefreshToken;
-import com.gary.ChatApp.domain.repository.RefreshTokenRepository;
+import com.gary.domain.model.user.RefreshToken;
+import com.gary.domain.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

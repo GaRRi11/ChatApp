@@ -1,6 +1,6 @@
 package com.gary.web.dto.user;
 
-import com.gary.ChatApp.domain.model.user.User;
+import com.gary.domain.model.user.User;
 import java.time.LocalDateTime;
 
 public record UserResponse(

@@ -1,5 +1,6 @@
 package com.gary.domain.service.presence;
 
+import com.gary.config.RedisKeys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,37 +13,32 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RedisUserPresenceService implements UserPresenceService {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, String> userPresenceRedisTemplate;
     private static final long ONLINE_EXPIRATION_SECONDS = 60;
-    private static final String PREFIX = "user:presence:";
-
-    private String key(Long userId) {
-        return PREFIX + userId;
-    }
-
     private static final String ONLINE_STATUS = "online";
 
     @Override
     public void refreshOnlineStatus(Long userId) {
-        if (userId == null) throw new IllegalArgumentException("userId cannot be null");
-        redisTemplate.opsForValue().set(key(userId), ONLINE_STATUS, ONLINE_EXPIRATION_SECONDS, TimeUnit.SECONDS);
+        userPresenceRedisTemplate.opsForValue().set(
+                RedisKeys.userPresence(userId),
+                ONLINE_STATUS,
+                ONLINE_EXPIRATION_SECONDS,
+                TimeUnit.SECONDS
+        );
     }
 
     @Override
     public void setOffline(Long userId) {
-        if (userId == null) throw new IllegalArgumentException("userId cannot be null");
-        redisTemplate.delete(key(userId));
+        userPresenceRedisTemplate.delete(RedisKeys.userPresence(userId));
     }
 
     @Override
     public boolean isOnline(Long userId) {
-        if (userId == null) return false;
         try {
-            return Boolean.TRUE.equals(redisTemplate.hasKey(key(userId)));
+            return Boolean.TRUE.equals(userPresenceRedisTemplate.hasKey(RedisKeys.userPresence(userId)));
         } catch (Exception e) {
-            log.error("Redis error when checking online status for userId {}", userId, e);
+            log.error("Redis error while checking online status for userId {}", userId, e);
             return false;
         }
     }
-
 }

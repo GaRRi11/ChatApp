@@ -1,10 +1,10 @@
 package com.gary.web.controller;
 
-import com.gary.ChatApp.domain.service.user.UserService;
-import com.gary.ChatApp.web.dto.loginResponse.LoginResponseDto;
-import com.gary.ChatApp.web.dto.refreshToken.RefreshTokenDto;
-import com.gary.ChatApp.web.dto.user.UserRequest;
-import com.gary.ChatApp.web.dto.user.UserResponse;
+import com.gary.domain.service.user.UserService;
+import com.gary.web.dto.loginResponse.LoginResponseDto;
+import com.gary.web.dto.refreshToken.RefreshTokenDto;
+import com.gary.web.dto.user.UserRequest;
+import com.gary.web.dto.user.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,6 +1,6 @@
 package com.gary.domain.repository;
 
-import com.gary.ChatApp.domain.model.user.RefreshToken;
+import com.gary.domain.model.user.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

@@ -1,6 +1,6 @@
 package com.gary.web.controller;
 
-import com.gary.ChatApp.domain.service.presence.UserPresenceService;
+import com.gary.domain.service.presence.UserPresenceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

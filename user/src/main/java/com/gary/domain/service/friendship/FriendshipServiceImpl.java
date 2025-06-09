@@ -1,11 +1,11 @@
 package com.gary.domain.service.friendship;
 
-import com.gary.ChatApp.domain.model.friendship.Friendship;
-import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.domain.repository.FriendshipRepository;
-import com.gary.ChatApp.domain.service.cache.ChatCacheService;
-import com.gary.ChatApp.domain.service.user.UserService;
-import com.gary.ChatApp.web.dto.user.UserResponse;
+import com.gary.domain.model.friendship.Friendship;
+import com.gary.domain.model.user.User;
+import com.gary.domain.repository.FriendshipRepository;
+import com.gary.domain.service.cache.ChatCacheService;
+import com.gary.domain.service.user.UserService;
+import com.gary.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

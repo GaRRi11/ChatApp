@@ -2,8 +2,10 @@ package com.gary.infrastructure.security;
 
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 
 
 import java.security.Key;
@@ -14,7 +16,8 @@ import io.jsonwebtoken.security.Keys;
 @Slf4j
 public class JwtTokenUtil {
 
-    private final String jwtSecret = "yourSecretKeyHere"; // Should be at least 256 bits for HS512
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000L; // 24 hours
     private static final long REFRESH_TOKEN_EXPIRATION_MS = ACCESS_TOKEN_EXPIRATION_MS * 7; // 7 days
@@ -23,7 +26,13 @@ public class JwtTokenUtil {
 
     @PostConstruct
     public void init() {
-        signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        try {
+            byte[] keyBytes = java.util.Base64.getDecoder().decode(jwtSecret);
+            signingKey = Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            log.error("Failed to initialize JWT signing key", e);
+            throw new IllegalArgumentException("Invalid jwt.secret", e);
+        }
     }
 
     public String generateAccessToken(Long userId, String username) {

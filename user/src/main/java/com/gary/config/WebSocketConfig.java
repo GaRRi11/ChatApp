@@ -1,9 +1,10 @@
 package com.gary.config;
 
-import com.gary.ChatApp.infrastructure.websocket.JwtHandshakeInterceptor;
-import com.gary.ChatApp.domain.service.presence.UserPresenceService;
-import com.gary.ChatApp.infrastructure.websocket.PingMessageInterceptor;
+import com.gary.infrastructure.websocket.JwtHandshakeInterceptor;
+import com.gary.domain.service.presence.UserPresenceService;
+import com.gary.infrastructure.websocket.PingMessageInterceptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

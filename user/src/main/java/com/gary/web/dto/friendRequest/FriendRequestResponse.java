@@ -1,6 +1,7 @@
 package com.gary.web.dto.friendRequest;
 
-import com.gary.ChatApp.domain.model.friendrequest.RequestStatus;
+import com.gary.domain.model.friendrequest.FriendRequest;
+import com.gary.domain.model.friendrequest.RequestStatus;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ public record FriendRequestResponse(
         LocalDateTime respondedAt
 
 ) {
-    public static FriendRequestResponse fromEntity(com.gary.ChatApp.domain.model.friendrequest.FriendRequest entity) {
+    public static FriendRequestResponse fromEntity(FriendRequest entity) {
         return new FriendRequestResponse(
                 entity.getId(),
                 entity.getSenderId(),

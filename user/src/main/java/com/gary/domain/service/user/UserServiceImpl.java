@@ -1,14 +1,14 @@
 package com.gary.domain.service.user;
 
-import com.gary.ChatApp.domain.model.user.User;
-import com.gary.ChatApp.domain.repository.UserRepository;
-import com.gary.ChatApp.domain.service.presence.UserPresenceService;
-import com.gary.ChatApp.exceptions.DuplicateResourceException;
-import com.gary.ChatApp.exceptions.UnauthorizedException;
-import com.gary.ChatApp.infrastructure.security.JwtTokenUtil;
-import com.gary.ChatApp.web.dto.loginResponse.LoginResponseDto;
-import com.gary.ChatApp.web.dto.user.UserRequest;
-import com.gary.ChatApp.web.dto.user.UserResponse;
+import com.gary.domain.model.user.User;
+import com.gary.domain.repository.UserRepository;
+import com.gary.domain.service.presence.UserPresenceService;
+import com.gary.exceptions.DuplicateResourceException;
+import com.gary.exceptions.UnauthorizedException;
+import com.gary.infrastructure.security.JwtTokenUtil;
+import com.gary.web.dto.loginResponse.LoginResponseDto;
+import com.gary.web.dto.user.UserRequest;
+import com.gary.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("Registering new user: {}", userRequest.username());
 
-        userRepository.findByName(userRequest.username()).ifPresent(u -> {
+        userRepository.findByUsername(userRequest.username()).ifPresent(u -> {
             log.warn("Username '{}' already exists", userRequest.username());
             throw new DuplicateResourceException("Username already exists");
         });
@@ -55,7 +55,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("Attempting login for user: {}", userRequest.username());
 
-        User user = userRepository.findByName(userRequest.username())
+        User user = userRepository.findByUsername(userRequest.username())
                 .orElseThrow(() -> {
                     log.warn("Login failed: username '{}' not found", userRequest.username());
                     return new UnauthorizedException("Invalid credentials");

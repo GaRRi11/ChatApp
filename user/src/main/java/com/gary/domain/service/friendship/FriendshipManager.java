@@ -1,8 +1,8 @@
 package com.gary.domain.service.friendship;
 
 
-import com.gary.ChatApp.domain.repository.FriendshipRepository;
-import com.gary.ChatApp.domain.model.friendship.Friendship;
+import com.gary.domain.repository.FriendshipRepository;
+import com.gary.domain.model.friendship.Friendship;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
