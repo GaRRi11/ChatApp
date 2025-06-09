@@ -1,6 +1,7 @@
 package com.gary.domain.repository;
 
 import com.gary.domain.model.friendship.Friendship;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     Optional<Friendship> findByUserIdAndFriendId(Long userId, Long friendId);
 
+    @Transactional
     void deleteByUserIdAndFriendId(Long userId, Long friendId);
 
 }

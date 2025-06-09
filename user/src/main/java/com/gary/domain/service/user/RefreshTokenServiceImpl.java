@@ -2,6 +2,7 @@ package com.gary.domain.service.user;
 
 import com.gary.domain.model.user.RefreshToken;
 import com.gary.domain.repository.RefreshTokenRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
+    @Transactional
     @Override
     public void save(Long userId, String token) {
         log.debug("Storing refresh token for userId={}", userId);

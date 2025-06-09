@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +42,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.save(User.builder()
                 .username(userRequest.username())
                 .password(passwordEncoder.encode(userRequest.password()))
+                .createdAt(LocalDateTime.now())
                 .build());
 
         UserResponse userResponse = UserResponse.fromEntity(user);

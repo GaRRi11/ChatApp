@@ -6,6 +6,7 @@ import com.gary.domain.repository.FriendshipRepository;
 import com.gary.domain.service.cache.ChatCacheService;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.user.UserResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         return friendshipRepository.findByUserIdAndFriendId(senderId, receiverId).isPresent();
     }
 
+    @Transactional
     @Override
     public void removeFriend(Long userId, Long friendId) {
         try {

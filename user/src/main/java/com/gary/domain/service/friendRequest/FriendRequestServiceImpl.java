@@ -34,6 +34,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                 .senderId(senderId)
                 .receiverId(receiverId)
                 .status(RequestStatus.PENDING)
+                .createdAt(LocalDateTime.now())
                 .build();
 
         FriendRequest saved = friendRequestRepository.save(newRequest);
