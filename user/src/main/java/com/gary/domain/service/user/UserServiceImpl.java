@@ -2,7 +2,7 @@ package com.gary.domain.service.user;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.repository.UserRepository;
-import com.gary.domain.service.presence.UserPresenceService;
+import com.gary.domain.service.refreshToken.RefreshTokenService;
 import com.gary.exceptions.DuplicateResourceException;
 import com.gary.exceptions.UnauthorizedException;
 import com.gary.infrastructure.security.JwtTokenUtil;

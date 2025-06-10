@@ -1,4 +1,4 @@
-package com.gary.domain.service.user;
+package com.gary.domain.service.refreshToken;
 
 import com.gary.config.RedisKeys;
 import com.gary.domain.model.user.RefreshToken;

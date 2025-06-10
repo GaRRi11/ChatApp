@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,14 +32,10 @@ public class ChatWebSocketController {
 
     @MessageMapping("/send")
     @SendToUser("/queue/confirm")
+    @PreAuthorize("isAuthenticated()")
     public ChatMessageResponse sendMessage(
             @Payload @Valid ChatMessageRequest request,
             @AuthenticationPrincipal User user) {
-
-        if (user == null) {
-            log.warn("Unauthorized attempt to send a chat message");
-            return null;
-        }
 
         try {
             ChatMessageResponse response = chatMessageService.sendMessage(request, user.getId());
@@ -61,21 +58,30 @@ public class ChatWebSocketController {
 
 
     @GetMapping("/history")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ChatMessageResponse>> getChatHistory(
-            @RequestParam Long user1Id,
-            @RequestParam Long user2Id) {
+            @AuthenticationPrincipal User user,
+            @RequestParam Long otherUserId,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "50") int limit) {
 
-        if (user1Id == null || user1Id <= 0 || user2Id == null || user2Id <= 0) {
-            log.warn("Invalid user IDs provided for chat history: user1Id={}, user2Id={}", user1Id, user2Id);
+        if (otherUserId == null || otherUserId <= 0 || user.getId().equals(otherUserId)) {
+            log.warn("Invalid request to fetch chat history. userId={}, otherUserId={}", user != null ? user.getId() : null, otherUserId);
             return ResponseEntity.badRequest().build();
         }
 
+        limit = Math.min(limit, 100);
+
         try {
-            List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user1Id, user2Id);
+            List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user.getId(), otherUserId, offset, limit);
+            log.info("Chat history fetched for user {} with user {} (offset={}, limit={})", user.getId(), otherUserId, offset, limit);
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
-            log.error("Error fetching chat history between users {} and {}: {}", user1Id, user2Id, e.getMessage(), e);
+            log.error("Error fetching chat history between users {} and {}: {}", user.getId(), otherUserId, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
+
 }
+
+

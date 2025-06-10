@@ -3,42 +3,50 @@ package com.gary.exceptions;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+@RestControllerAdvice
 public class ApiExceptionsHandler {
-    @ExceptionHandler(value = {FriendshipAlreadyExistsException.class})
-    public ResponseEntity<Object> handleFriendshipAlreadyExistsException (FriendshipAlreadyExistsException e){
-        HttpStatus badRequest = HttpStatus.BAD_REQUEST;
 
+    private ResponseEntity<Object> buildResponse(RuntimeException e, HttpStatus status) {
         ApiException apiException = new ApiException(
                 e.getMessage(),
-                badRequest,
+                status,
                 ZonedDateTime.now(ZoneId.of("Z"))
         );
-        return new ResponseEntity<>(apiException, badRequest);
+        return new ResponseEntity<>(apiException, status);
     }
-    @ExceptionHandler(value = {FriendshipDoesnotExistException.class})
-    public ResponseEntity<Object> handleFriendshipDoesnotExistException (FriendshipDoesnotExistException e){
-        HttpStatus badRequest = HttpStatus.BAD_REQUEST;
 
-        ApiException apiException = new ApiException(
-                e.getMessage(),
-                badRequest,
-                ZonedDateTime.now(ZoneId.of("Z"))
-        );
-        return new ResponseEntity<>(apiException, badRequest);
+    @ExceptionHandler(FriendshipAlreadyExistsException.class)
+    public ResponseEntity<Object> handleFriendshipAlreadyExists(FriendshipAlreadyExistsException e) {
+        return buildResponse(e, HttpStatus.CONFLICT);
     }
-    @ExceptionHandler(value = {UserDoesnotExistException.class})
-    public ResponseEntity<Object> handleUserDoesnotExistException (UserDoesnotExistException e){
-        HttpStatus badRequest = HttpStatus.BAD_REQUEST;
 
-        ApiException apiException = new ApiException(
-                e.getMessage(),
-                badRequest,
-                ZonedDateTime.now(ZoneId.of("Z"))
-        );
-        return new ResponseEntity<>(apiException, badRequest);
+    @ExceptionHandler(FriendshipDoesnotExistException.class)
+    public ResponseEntity<Object> handleFriendshipDoesNotExist(FriendshipDoesnotExistException e) {
+        return buildResponse(e, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserDoesnotExistException.class)
+    public ResponseEntity<Object> handleUserDoesNotExist(UserDoesnotExistException e) {
+        return buildResponse(e, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(FriendRequestNotFoundException.class)
+    public ResponseEntity<Object> handleFriendRequestNotFound(FriendRequestNotFoundException e) {
+        return buildResponse(e, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException e) {
+        return buildResponse(e, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Object> handleUnauthorized(UnauthorizedException e) {
+        return buildResponse(e, HttpStatus.UNAUTHORIZED);
     }
 }

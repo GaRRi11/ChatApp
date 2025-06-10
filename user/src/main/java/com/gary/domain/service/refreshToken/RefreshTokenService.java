@@ -1,4 +1,4 @@
-package com.gary.domain.service.user;
+package com.gary.domain.service.refreshToken;
 
 public interface RefreshTokenService {
      void save(Long userId, String token);

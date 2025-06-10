@@ -5,12 +5,14 @@ import com.gary.domain.model.friendrequest.RequestStatus;
 import com.gary.domain.repository.FriendRequestRepository;
 import com.gary.domain.repository.FriendshipRepository;
 import com.gary.domain.service.friendship.FriendshipManager;
+import com.gary.exceptions.DuplicateResourceException;
 import com.gary.exceptions.FriendRequestNotFoundException;
+import com.gary.exceptions.UnauthorizedException;
 import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.friendRequest.FriendRequestResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,10 +25,23 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipRepository friendshipRepository;
+    private final FriendshipManager friendshipManager;
 
 
     @Override
     public FriendRequestResponse sendRequest(Long senderId,  Long receiverId) {
+
+
+        boolean exists = friendRequestRepository.existsBySenderIdAndReceiverIdAndStatusIn(
+                senderId,
+                receiverId,
+                List.of(RequestStatus.PENDING, RequestStatus.ACCEPTED)
+        );
+
+        if (exists) {
+            throw new DuplicateResourceException("Friend request already exists");
+        }
+
 
         log.info("Processing friend request from {} to {}", senderId, receiverId);
 
@@ -44,6 +59,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
         return response;
     }
 
+    @Transactional
     @Override
     public void respondToRequest(RespondToFriendDto dto, Long userId) {
         FriendRequest request = friendRequestRepository.findById(dto.requestId())
@@ -54,7 +70,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         if (!request.getReceiverId().equals(userId)) {
             log.warn("User {} is not authorized to respond to friend request {}", userId, dto.requestId());
-            throw new AccessDeniedException("You are not authorized to respond to this friend request");
+            throw new UnauthorizedException("You are not authorized to respond to this friend request");
         }
 
 
@@ -64,7 +80,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
         friendRequestRepository.save(request);
 
         if (newStatus == RequestStatus.ACCEPTED) {
-            FriendshipManager.saveBidirectional(request.getSenderId(), request.getReceiverId(), friendshipRepository);
+            friendshipManager.saveBidirectional(request.getSenderId(), request.getReceiverId(), friendshipRepository);
             log.info("Accepted friend request between {} and {}", request.getSenderId(), request.getReceiverId());
         } else {
             log.info("Declined friend request between {} and {}", request.getSenderId(), request.getReceiverId());

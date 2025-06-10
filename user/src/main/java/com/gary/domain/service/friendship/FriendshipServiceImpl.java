@@ -9,6 +9,7 @@ import com.gary.web.dto.user.UserResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,8 +21,9 @@ import java.util.stream.Collectors;
 public class FriendshipServiceImpl implements FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
-    private final ChatCacheService chatCacheService; // 👈 Add this
     private final UserService userService;
+    private final FriendshipManager friendshipManager;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Override
@@ -39,23 +41,20 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Override
     public boolean areFriends(Long senderId, Long receiverId) {
-        return friendshipRepository.findByUserIdAndFriendId(senderId, receiverId).isPresent();
+        return friendshipRepository.existsByUserIdAndFriendId(senderId, receiverId);
     }
 
     @Transactional
     @Override
     public void removeFriend(Long userId, Long friendId) {
         try {
-            // Assuming FriendshipManager.deleteBidirectional handles both sides removal
-            FriendshipManager.deleteBidirectional(userId, friendId, friendshipRepository);
+            friendshipManager.deleteBidirectional(userId, friendId, friendshipRepository);
 
-            // Evict chat cache to avoid stale data
-            chatCacheService.evictChatCache(userId, friendId);
+            eventPublisher.publishEvent(new FriendshipRemovedEvent(this, userId, friendId));
 
             log.info("Removed friendship and evicted cache for userId={} and friendId={}", userId, friendId);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Failed to remove friendship between userId={} and friendId={}", userId, friendId, e);
-            // Optionally rethrow or handle exception depending on your error handling strategy
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.gary.web.controller;
 
 import com.gary.domain.service.presence.UserPresenceService;
+import com.gary.web.dto.userPresenceResponse.UserPresenceResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,8 +16,9 @@ public class UserPresenceController {
 
     private final UserPresenceService userPresenceService;
 
-    @GetMapping("/is-online/{userId}")
-    public boolean isOnline(@PathVariable Long userId) {
-        return userPresenceService.isOnline(userId);
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserPresenceResponse> isOnline(@PathVariable Long userId) {
+        boolean online = userPresenceService.isOnline(userId);
+        return ResponseEntity.ok(new UserPresenceResponse(online));
     }
 }

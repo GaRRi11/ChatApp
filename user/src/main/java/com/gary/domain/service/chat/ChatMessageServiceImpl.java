@@ -8,6 +8,7 @@ import com.gary.exceptions.TooManyRequestsException;
 import com.gary.web.dto.chatMessage.ChatMessageRequest;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatMessageServiceImpl implements ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
@@ -44,14 +46,16 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     @Override
-    public List<ChatMessageResponse> getChatHistory(Long user1Id, Long user2Id) {
-        List<ChatMessageResponse> cachedMessages = chatCacheService.getCachedMessages(user1Id, user2Id);
+    public List<ChatMessageResponse> getChatHistory(Long user1Id, Long user2Id, int offset, int limit) {
+        List<ChatMessageResponse> cachedMessages = chatCacheService.getCachedMessages(user1Id, user2Id, offset, limit);
 
         if (cachedMessages != null && !cachedMessages.isEmpty()) {
+            log.info("Cache HIT for chat between {} and {}", user1Id, user2Id);
             return cachedMessages;
         }
 
-        List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id);
+        log.info("Cache MISS for chat between {} and {}", user1Id, user2Id);
+        List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id, offset, limit);
         List<ChatMessageResponse> responses = messages.stream()
                 .map(ChatMessageResponse::fromEntity)
                 .collect(Collectors.toList());

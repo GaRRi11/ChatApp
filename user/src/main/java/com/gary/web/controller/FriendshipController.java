@@ -6,6 +6,7 @@ import com.gary.web.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ public class FriendshipController {
     private final FriendshipService friendshipService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<UserResponse>> getFriends(@AuthenticationPrincipal User authenticatedUser) {
         Long userId = authenticatedUser.getId();
 
@@ -29,6 +31,7 @@ public class FriendshipController {
     }
 
     @DeleteMapping("/remove/{friendId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeFriend(@AuthenticationPrincipal User authenticatedUser,
                                              @PathVariable Long friendId) {
         Long userId = authenticatedUser.getId();

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class FriendRequestController {
     private final FriendshipService friendshipService;
 
     @PostMapping("/send")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<FriendRequestResponse> sendRequest(
             @RequestParam Long receiverId,
             @AuthenticationPrincipal User authenticatedUser) {
@@ -42,7 +44,9 @@ public class FriendRequestController {
         return ResponseEntity.ok(sentRequest);
     }
 
+
     @PostMapping("/respond")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> respondToRequest(
             @RequestBody @Valid RespondToFriendDto dto,
             @AuthenticationPrincipal User authenticatedUser) {
@@ -59,6 +63,7 @@ public class FriendRequestController {
     }
 
     @GetMapping("/pending")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<FriendRequestResponse>> getPendingRequests(
             @AuthenticationPrincipal User authenticatedUser) {
 
@@ -69,6 +74,7 @@ public class FriendRequestController {
     }
 
     @GetMapping("/sent")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<FriendRequestResponse>> getSentRequests(
             @AuthenticationPrincipal User authenticatedUser) {
 
