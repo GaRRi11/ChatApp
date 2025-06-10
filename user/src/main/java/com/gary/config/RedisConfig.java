@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.gary.domain.model.user.RefreshToken;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -63,6 +64,30 @@ public class RedisConfig {
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, RefreshToken> refreshTokenRedisTemplate(LettuceConnectionFactory connectionFactory) {
+        RedisTemplate<String, RefreshToken> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.activateDefaultTyping(
+                BasicPolymorphicTypeValidator.builder().build(),
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
+        );
+
+        Jackson2JsonRedisSerializer<RefreshToken> serializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, RefreshToken.class);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+
         template.afterPropertiesSet();
         return template;
     }

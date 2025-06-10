@@ -78,4 +78,13 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                 .map(FriendRequestResponse::fromEntity)  // convert each entity to DTO
                 .toList();  // collect as List<FriendRequestDto>
     }
+
+    @Override
+    public List<FriendRequestResponse> getSentRequests(Long userId) {
+        log.debug("Fetching sent friend requests by userId={}", userId);
+        return friendRequestRepository.findBySenderIdAndStatus(userId, RequestStatus.PENDING).stream()
+                .map(FriendRequestResponse::fromEntity)
+                .toList();
+    }
+
 }

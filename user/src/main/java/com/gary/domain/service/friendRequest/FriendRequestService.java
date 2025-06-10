@@ -9,4 +9,5 @@ public interface FriendRequestService {
     FriendRequestResponse sendRequest(Long senderId, Long receiverId);
     void respondToRequest(RespondToFriendDto responseDto, Long userId);
     List<FriendRequestResponse> getPendingRequests(Long userId);
-}
+    List<FriendRequestResponse> getSentRequests(Long userId);
+    }

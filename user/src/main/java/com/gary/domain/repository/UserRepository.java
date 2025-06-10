@@ -9,4 +9,6 @@ import java.util.List;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
+    List<User> findByUsernameContainingIgnoreCase(String username);
+
 }

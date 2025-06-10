@@ -19,5 +19,16 @@ public class RedisKeys {
         if (userId == null) throw new IllegalArgumentException("userId cannot be null");
         return "rate:message:" + userId;
     }
+
+    public static String refreshToken(String token) {
+        if (token == null) throw new IllegalArgumentException("token cannot be null");
+        return "auth:refresh:" + token;
+    }
+
+    public static String refreshTokenSet(Long userId) {
+        if (userId == null) throw new IllegalArgumentException("userId cannot be null");
+        return "auth:refresh:set:" + userId;
+    }
 }
+
 

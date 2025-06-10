@@ -24,7 +24,6 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final UserPresenceService userPresenceService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
     private final RefreshTokenService refreshTokenService;
@@ -53,6 +52,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserResponse> searchByUsername(String username, Long requesterId) {
+        return userRepository.findByUsernameContainingIgnoreCase(username).stream()
+                .filter(user -> !user.getId().equals(requesterId)) // exclude self
+                .map(UserResponse::fromEntity)
+                .toList();
+    }
+
+
+    @Override
     public LoginResponseDto login(UserRequest userRequest) {
 
         log.info("Attempting login for user: {}", userRequest.username());
@@ -79,6 +87,16 @@ public class UserServiceImpl implements UserService {
                 .token(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    @Override
+    public void logout(User user) {
+        log.info("Logging out user: {}", user.getUsername());
+
+        // Invalidate the refresh token for the user
+        refreshTokenService.invalidate(user.getId());
+
+        log.info("User '{}' logged out successfully", user.getUsername());
     }
 
 
@@ -117,17 +135,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getById(Long id) {
         Optional<User> user = userRepository.findById(id);
-        user.ifPresent(u -> u.setOnline(userPresenceService.isOnline(u.getId())));
         return user;
     }
 
     @Override
     public List<User> findAllById(List<Long> userIds) {
         List<User> users = userRepository.findAllById(userIds);
-
-        // Update online status for each user
-        users.forEach(user -> user.setOnline(userPresenceService.isOnline(user.getId())));
-
         return users;
     }
 

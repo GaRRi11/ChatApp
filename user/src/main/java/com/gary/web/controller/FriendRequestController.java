@@ -67,4 +67,15 @@ public class FriendRequestController {
         List<FriendRequestResponse> pendingRequests = friendRequestService.getPendingRequests(userId);
         return ResponseEntity.ok(pendingRequests);
     }
+
+    @GetMapping("/sent")
+    public ResponseEntity<List<FriendRequestResponse>> getSentRequests(
+            @AuthenticationPrincipal User authenticatedUser) {
+
+        Long userId = authenticatedUser.getId();
+        log.debug("Fetching sent friend requests for userId={}", userId);
+        List<FriendRequestResponse> sentRequests = friendRequestService.getSentRequests(userId);
+        return ResponseEntity.ok(sentRequests);
+    }
+
 }

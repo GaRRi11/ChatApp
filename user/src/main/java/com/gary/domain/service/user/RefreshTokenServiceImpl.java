@@ -1,66 +1,101 @@
 package com.gary.domain.service.user;
 
+import com.gary.config.RedisKeys;
 import com.gary.domain.model.user.RefreshToken;
-import com.gary.domain.repository.RefreshTokenRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
-public class RefreshTokenServiceImpl implements RefreshTokenService {
+public abstract class RefreshTokenServiceImpl implements RefreshTokenService {
 
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisTemplate<String, RefreshToken> refreshTokenRedisTemplate;
 
-    @Transactional
+    private static final long REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
+
     @Override
     public void save(Long userId, String token) {
-        log.debug("Storing refresh token for userId={}", userId);
-
-        refreshTokenRepository.deleteByUserId(userId); // invalidate previous
+        String key = RedisKeys.refreshToken(token);
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .userId(userId)
                 .token(token)
-                .expiryDate(Instant.now().plusSeconds(7 * 24 * 3600).toEpochMilli())
+                .expiryDate(Instant.now().plusSeconds(REFRESH_TOKEN_TTL).toEpochMilli())
                 .revoked(false)
                 .build();
 
-        refreshTokenRepository.save(refreshToken);
+        refreshTokenRedisTemplate.opsForValue().set(key, refreshToken);
+        refreshTokenRedisTemplate.expire(key, Duration.ofSeconds(REFRESH_TOKEN_TTL));
 
-        log.debug("Refresh token stored for userId={}", userId);
+        log.debug("Stored refresh token in Redis: {}", key);
+
+        // Optionally track token per user for global logout support
+        String userTokenSetKey = RedisKeys.refreshTokenSet(userId);
+        refreshTokenRedisTemplate.opsForSet().add(userTokenSetKey, refreshToken);
+        refreshTokenRedisTemplate.expire(userTokenSetKey, Duration.ofSeconds(REFRESH_TOKEN_TTL));
     }
 
     @Override
     public boolean isValid(String token) {
-        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByToken(token);
-        if (tokenOpt.isEmpty()) return false;
+        String key = RedisKeys.refreshToken(token);
+        RefreshToken refreshToken = refreshTokenRedisTemplate.opsForValue().get(key);
 
-        RefreshToken refreshToken = tokenOpt.get();
-
-        boolean valid = !refreshToken.isRevoked() &&
-                refreshToken.getExpiryDate() > Instant.now().toEpochMilli();
-
-        if (!valid) {
-            log.warn("Invalid refresh token: token={}, revoked={}, expired={}",
-                    token, refreshToken.isRevoked(),
-                    refreshToken.getExpiryDate() < Instant.now().toEpochMilli());
+        if (refreshToken == null) {
+            log.warn("Refresh token not found or expired: {}", token);
+            return false;
         }
 
-        return valid;
+        if (refreshToken.getExpiryDate() < Instant.now().toEpochMilli()) {
+            log.info("Refresh token expired: {}", token);
+            refreshTokenRedisTemplate.delete(key);
+            return false;
+        }
+
+        if (refreshToken.isRevoked()) {
+            log.info("Refresh token has been revoked: {}", token);
+            return false;
+        }
+
+        return true;
     }
 
     @Override
     public void revoke(String token) {
-        refreshTokenRepository.findByToken(token).ifPresent(rt -> {
-            rt.setRevoked(true);
-            refreshTokenRepository.save(rt);
-            log.info("Refresh token revoked for userId={}", rt.getUserId());
-        });
+        String key = RedisKeys.refreshToken(token);
+        RefreshToken refreshToken = refreshTokenRedisTemplate.opsForValue().get(key);
+
+        if (refreshToken != null) {
+            refreshToken.setRevoked(true);
+            refreshTokenRedisTemplate.opsForValue().set(key, refreshToken);
+            refreshTokenRedisTemplate.expire(key, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+            log.info("Refresh token marked as revoked: {}", token);
+        } else {
+            log.warn("Attempted to revoke non-existent refresh token: {}", token);
+        }
+    }
+
+    @Override
+    public void revokeAll(Long userId) {
+        String userTokenSetKey = RedisKeys.refreshTokenSet(userId);
+        var tokens = refreshTokenRedisTemplate.opsForSet().members(userTokenSetKey);
+
+        if (tokens != null) {
+            for (Object obj : tokens) {
+                if (obj instanceof RefreshToken refreshToken) {
+                    refreshToken.setRevoked(true);
+                    String tokenKey = RedisKeys.refreshToken(refreshToken.getToken());
+                    refreshTokenRedisTemplate.opsForValue().set(tokenKey, refreshToken);
+                    refreshTokenRedisTemplate.expire(tokenKey, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+                }
+            }
+        }
+
+        log.info("Revoked all refresh tokens for user: {}", userId);
     }
 }

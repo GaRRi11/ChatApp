@@ -1,5 +1,6 @@
 package com.gary.web.controller;
 
+import com.gary.domain.model.user.User;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.loginResponse.LoginResponseDto;
 import com.gary.web.dto.refreshToken.RefreshTokenDto;
@@ -9,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,6 +30,12 @@ public class AuthController {
     public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid UserRequest request) {
         LoginResponseDto response = userService.login(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal User authenticatedUser) {
+        userService.logout(authenticatedUser);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/refresh-token")

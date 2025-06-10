@@ -13,5 +13,8 @@ public interface UserService {
     UserResponse register(UserRequest userRequest);
     LoginResponseDto refreshToken(String token);
     LoginResponseDto login(UserRequest userRequest);
+    void logout(User user);
     List<User> findAllById(List<Long> userIds);
+
+    List<UserResponse> searchByUsername(String username, Long id);
 }
