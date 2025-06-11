@@ -25,18 +25,24 @@ public class PingMessageInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor.wrap(message);
+
         if (SimpMessageType.MESSAGE.equals(accessor.getMessageType())) {
             String destination = accessor.getDestination();
+
             if (PING_DESTINATION.equals(destination)) {
                 Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+
                 if (sessionAttributes != null) {
-                    Long userId = (Long) sessionAttributes.get(USER_ID_ATTR);
-                    if (userId != null) {
+                    Object userIdObj = sessionAttributes.get(USER_ID_ATTR);
+
+                    if (userIdObj instanceof Long userId) {
                         userPresenceService.refreshOnlineStatus(userId);
-                        log.debug("Refreshed online status for user {}", userId);
+                        log.debug("Refreshed online status for user {} (session: {})", userId, accessor.getSessionId());
                     } else {
-                        log.warn("Ping message received but user-id missing in session attributes");
+                        log.warn("Ping message received but user-id missing or invalid in session attributes (session: {})", accessor.getSessionId());
                     }
+                } else {
+                    log.warn("Ping message received but session attributes are null (session: {})", accessor.getSessionId());
                 }
             }
         }

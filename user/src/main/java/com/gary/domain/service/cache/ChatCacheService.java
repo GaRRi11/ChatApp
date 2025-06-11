@@ -1,6 +1,7 @@
 package com.gary.domain.service.cache;
 
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 

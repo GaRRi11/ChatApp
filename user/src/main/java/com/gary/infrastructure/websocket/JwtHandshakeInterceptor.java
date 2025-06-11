@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.InetSocketAddress;
 import java.util.Map;
 
 @Component
@@ -19,6 +21,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
     private final JwtTokenUtil jwtTokenUtil;
     private static final String USER_ID_ATTR = "user-id";
+    private static final String TOKEN_PARAM = "token";
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request,
@@ -27,7 +30,13 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                                    Map<String, Object> attributes) {
 
         String uri = request.getURI().toString();
-        String token = UriComponentsBuilder.fromUriString(uri).build().getQueryParams().getFirst("token");
+        String token = UriComponentsBuilder.fromUriString(uri).build().getQueryParams().getFirst(TOKEN_PARAM);
+
+        InetSocketAddress remoteAddress = request.getRemoteAddress();
+        if (remoteAddress != null) {
+            log.info("WebSocket handshake attempt from IP: {}", remoteAddress.getAddress());
+        }
+
 
         if (token == null) {
             log.error("Missing token in handshake request URI: {}", uri);
@@ -58,7 +67,6 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                                ServerHttpResponse response,
                                WebSocketHandler wsHandler,
                                Exception exception) {
-        // no-op or add logging if exception != null
         if (exception != null) {
             log.error("Handshake failed with exception: {}", exception.getMessage(), exception);
         }
