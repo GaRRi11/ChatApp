@@ -13,9 +13,10 @@ import java.time.Instant;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public abstract class RefreshTokenServiceImpl implements RefreshTokenService {
+public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RedisTemplate<String, RefreshToken> refreshTokenRedisTemplate;
+    private final RedisTemplate<String, String> stringRedisTemplate;
 
     private static final long REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
 
@@ -30,15 +31,15 @@ public abstract class RefreshTokenServiceImpl implements RefreshTokenService {
                 .revoked(false)
                 .build();
 
-        refreshTokenRedisTemplate.opsForValue().set(key, refreshToken);
-        refreshTokenRedisTemplate.expire(key, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+        refreshTokenRedisTemplate.opsForValue()
+                .set(key, refreshToken, Duration.ofSeconds(REFRESH_TOKEN_TTL));
 
         log.debug("Stored refresh token in Redis: {}", key);
 
-        // Optionally track token per user for global logout support
+        // Store token string (not whole object) to user set
         String userTokenSetKey = RedisKeys.refreshTokenSet(userId);
-        refreshTokenRedisTemplate.opsForSet().add(userTokenSetKey, refreshToken);
-        refreshTokenRedisTemplate.expire(userTokenSetKey, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+        stringRedisTemplate.opsForSet().add(userTokenSetKey, token);
+        stringRedisTemplate.expire(userTokenSetKey, Duration.ofSeconds(REFRESH_TOKEN_TTL));
     }
 
     @Override
@@ -72,8 +73,11 @@ public abstract class RefreshTokenServiceImpl implements RefreshTokenService {
 
         if (refreshToken != null) {
             refreshToken.setRevoked(true);
-            refreshTokenRedisTemplate.opsForValue().set(key, refreshToken);
-            refreshTokenRedisTemplate.expire(key, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+
+            Long ttlSeconds = refreshTokenRedisTemplate.getExpire(key, java.util.concurrent.TimeUnit.SECONDS);
+            Duration ttl = ttlSeconds != null && ttlSeconds > 0 ? Duration.ofSeconds(ttlSeconds) : Duration.ofSeconds(REFRESH_TOKEN_TTL);
+            refreshTokenRedisTemplate.opsForValue().set(key, refreshToken, ttl);
+
             log.info("Refresh token marked as revoked: {}", token);
         } else {
             log.warn("Attempted to revoke non-existent refresh token: {}", token);
@@ -83,19 +87,23 @@ public abstract class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public void revokeAll(Long userId) {
         String userTokenSetKey = RedisKeys.refreshTokenSet(userId);
-        var tokens = refreshTokenRedisTemplate.opsForSet().members(userTokenSetKey);
+        var tokens = stringRedisTemplate.opsForSet().members(userTokenSetKey);
 
         if (tokens != null) {
-            for (Object obj : tokens) {
-                if (obj instanceof RefreshToken refreshToken) {
+            for (String token : tokens) {
+                String tokenKey = RedisKeys.refreshToken(token);
+                RefreshToken refreshToken = refreshTokenRedisTemplate.opsForValue().get(tokenKey);
+
+                if (refreshToken != null) {
                     refreshToken.setRevoked(true);
-                    String tokenKey = RedisKeys.refreshToken(refreshToken.getToken());
-                    refreshTokenRedisTemplate.opsForValue().set(tokenKey, refreshToken);
-                    refreshTokenRedisTemplate.expire(tokenKey, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+                    Long ttlSeconds = refreshTokenRedisTemplate.getExpire(tokenKey, java.util.concurrent.TimeUnit.SECONDS);
+                    Duration ttl = ttlSeconds != null && ttlSeconds > 0 ? Duration.ofSeconds(ttlSeconds) : Duration.ofSeconds(REFRESH_TOKEN_TTL);
+                    refreshTokenRedisTemplate.opsForValue().set(tokenKey, refreshToken, ttl);
                 }
             }
         }
 
         log.info("Revoked all refresh tokens for user: {}", userId);
     }
+
 }

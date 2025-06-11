@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,8 +30,8 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenService refreshTokenService;
 
     @Override
+    @Transactional
     public UserResponse register(UserRequest userRequest) {
-
         log.info("Registering new user: {}", userRequest.username());
 
         userRepository.findByUsername(userRequest.username()).ifPresent(u -> {
@@ -44,25 +45,21 @@ public class UserServiceImpl implements UserService {
                 .createdAt(LocalDateTime.now())
                 .build());
 
-        UserResponse userResponse = UserResponse.fromEntity(user);
-
         log.info("User '{}' registered successfully", userRequest.username());
 
-        return userResponse;
+        return UserResponse.fromEntity(user);
     }
 
     @Override
     public List<UserResponse> searchByUsername(String username, Long requesterId) {
         return userRepository.findByUsernameContainingIgnoreCase(username).stream()
-                .filter(user -> !user.getId().equals(requesterId)) // exclude self
+                .filter(user -> !user.getId().equals(requesterId))
                 .map(UserResponse::fromEntity)
                 .toList();
     }
 
-
     @Override
     public LoginResponseDto login(UserRequest userRequest) {
-
         log.info("Attempting login for user: {}", userRequest.username());
 
         User user = userRepository.findByUsername(userRequest.username())
@@ -93,16 +90,14 @@ public class UserServiceImpl implements UserService {
     public void logout(User user) {
         log.info("Logging out user: {}", user.getUsername());
 
-        // Invalidate the refresh token for the user
-        refreshTokenService.invalidate(user.getId());
+        refreshTokenService.revokeAll(user.getId());
 
         log.info("User '{}' logged out successfully", user.getUsername());
     }
 
-
     @Override
+    @Transactional
     public LoginResponseDto refreshToken(String token) {
-
         log.info("Refreshing access token");
 
         if (!jwtTokenUtil.validateToken(token)) {
@@ -118,9 +113,9 @@ public class UserServiceImpl implements UserService {
         Long userId = jwtTokenUtil.extractUserId(token);
         String username = jwtTokenUtil.extractUsername(token);
 
+        refreshTokenService.revoke(token); // revoke old token
         String newAccessToken = jwtTokenUtil.generateAccessToken(userId, username);
         String newRefreshToken = jwtTokenUtil.generateRefreshToken(userId, username);
-
         refreshTokenService.save(userId, newRefreshToken);
 
         log.info("New tokens issued for user '{}'", username);
@@ -131,11 +126,9 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-
     @Override
     public Optional<User> getById(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        return user;
+        return userRepository.findById(id);
     }
 
     @Override
@@ -143,6 +136,5 @@ public class UserServiceImpl implements UserService {
         List<User> users = userRepository.findAllById(userIds);
         return users;
     }
-
 
 }

@@ -13,6 +13,7 @@ import com.gary.web.dto.friendRequest.FriendRequestResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,9 +25,7 @@ import java.util.List;
 public class FriendRequestServiceImpl implements FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
-    private final FriendshipRepository friendshipRepository;
-    private final FriendshipManager friendshipManager;
-
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public FriendRequestResponse sendRequest(Long senderId,  Long receiverId) {
@@ -80,7 +79,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
         friendRequestRepository.save(request);
 
         if (newStatus == RequestStatus.ACCEPTED) {
-            friendshipManager.saveBidirectional(request.getSenderId(), request.getReceiverId(), friendshipRepository);
+            eventPublisher.publishEvent(new FriendRequestAcceptedEvent(this, request.getSenderId(), request.getReceiverId()));
             log.info("Accepted friend request between {} and {}", request.getSenderId(), request.getReceiverId());
         } else {
             log.info("Declined friend request between {} and {}", request.getSenderId(), request.getReceiverId());

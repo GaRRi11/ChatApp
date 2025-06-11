@@ -7,8 +7,6 @@ public interface RefreshTokenService {
 
      void revoke(String token);
 
-     void invalidate(Long userId);
-
      void revokeAll(Long userId);
 
     }

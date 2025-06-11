@@ -1,7 +1,6 @@
 package com.gary.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.gary.domain.model.user.RefreshToken;
@@ -18,78 +17,60 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Bean
-    public   LettuceConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(); // Configure with properties
+    public LettuceConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory();
     }
 
     @Bean
-    public RedisTemplate<String, String> rateLimiterRedisTemplate(LettuceConnectionFactory connectionFactory) {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
-        template.afterPropertiesSet();
-        return template;
-    }
-
-
-    @Bean
-    public    RedisTemplate<String, ChatMessageResponse> chatMessageRedisTemplate(LettuceConnectionFactory connectionFactory) {
-        RedisTemplate<String, ChatMessageResponse> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-
-        // Create secure ObjectMapper
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder().build(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
-        );
-
-        Jackson2JsonRedisSerializer<ChatMessageResponse> serializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, ChatMessageResponse.class);
-
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(serializer);
-
-        template.afterPropertiesSet();
-        return template;
+    public RedisTemplate<String, String> rateLimiterRedisTemplate(LettuceConnectionFactory factory) {
+        return buildTemplate(String.class, factory);
     }
 
     @Bean
-    public RedisTemplate<String, String> userPresenceRedisTemplate(LettuceConnectionFactory connectionFactory) {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
-        template.afterPropertiesSet();
-        return template;
+    public RedisTemplate<String, String> userPresenceRedisTemplate(LettuceConnectionFactory factory) {
+        return buildTemplate(String.class, factory);
     }
 
     @Bean
-    public RedisTemplate<String, RefreshToken> refreshTokenRedisTemplate(LettuceConnectionFactory connectionFactory) {
-        RedisTemplate<String, RefreshToken> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
+    public RedisTemplate<String, RefreshToken> refreshTokenRedisTemplate(LettuceConnectionFactory factory) {
+        return buildTemplate(RefreshToken.class, factory);
+    }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder().build(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
-        );
+    @Bean
+    public RedisTemplate<String, ChatMessageResponse> chatMessageRedisTemplate(LettuceConnectionFactory factory) {
+        return buildTemplate(ChatMessageResponse.class, factory);
+    }
 
-        Jackson2JsonRedisSerializer<RefreshToken> serializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, RefreshToken.class);
+    private <T> RedisTemplate<String, T> buildTemplate(Class<T> clazz, LettuceConnectionFactory factory) {
+        RedisTemplate<String, T> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
 
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(serializer);
+        // For String values, use plain StringRedisSerializer
+        if (clazz.equals(String.class)) {
+            StringRedisSerializer stringSerializer = new StringRedisSerializer();
+            template.setKeySerializer(stringSerializer);
+            template.setValueSerializer(stringSerializer);
+            template.setHashKeySerializer(stringSerializer);
+            template.setHashValueSerializer(stringSerializer);
+        } else {
+            ObjectMapper objectMapper = new ObjectMapper();
+            BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                    .allowIfSubType("com.gary")
+                    .build();
+            objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+
+            Jackson2JsonRedisSerializer<T> serializer = new Jackson2JsonRedisSerializer<>(objectMapper, clazz);
+            template.setKeySerializer(new StringRedisSerializer());
+            template.setValueSerializer(serializer);
+            template.setHashKeySerializer(new StringRedisSerializer());
+            template.setHashValueSerializer(serializer);
+        }
 
         template.afterPropertiesSet();
         return template;
     }
 }
+
+
+
 
