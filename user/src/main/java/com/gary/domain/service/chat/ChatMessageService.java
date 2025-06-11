@@ -2,7 +2,6 @@ package com.gary.domain.service.chat;
 
 import com.gary.web.dto.chatMessage.ChatMessageRequest;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
