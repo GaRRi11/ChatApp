@@ -17,7 +17,7 @@ public class FriendshipRemovedEventListener {
 
     @EventListener
     public void onFriendshipRemoved(FriendshipRemovedEvent event) {
-        chatCacheService.evictChatCache(event.getUserId(), event.getFriendId());
+        chatCacheService.clearCachedMessages(event.getUserId(), event.getFriendId());
         log.info("Evicted chat cache after friendship removed: userId={}, friendId={}",
                 event.getUserId(), event.getFriendId());
     }

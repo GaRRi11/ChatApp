@@ -7,5 +7,5 @@ import java.util.List;
 public interface ChatCacheService {
      void cacheMessage(ChatMessageResponse message);
      List<ChatMessageResponse> getCachedMessages(Long user1Id, Long user2Id, int offset, int limit);
-     void evictChatCache(Long user1Id, Long user2Id);
+     void clearCachedMessages(Long user1Id, Long user2Id);
     }

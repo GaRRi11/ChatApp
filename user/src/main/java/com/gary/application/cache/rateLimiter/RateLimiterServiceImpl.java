@@ -1,4 +1,4 @@
-package com.gary.application.rateLimiter;
+package com.gary.application.cache.rateLimiter;
 
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;

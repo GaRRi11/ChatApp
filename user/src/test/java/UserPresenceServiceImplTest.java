@@ -1,5 +1,5 @@
 
-import com.gary.application.presence.UserPresenceServiceImpl;
+import com.gary.application.cache.presence.UserPresenceServiceImpl;
 import com.gary.infrastructure.constants.RedisKeys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

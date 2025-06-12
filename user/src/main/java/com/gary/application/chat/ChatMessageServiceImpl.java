@@ -8,8 +8,10 @@ import com.gary.domain.service.rateLimiter.RateLimiterService;
 import com.gary.web.exception.TooManyRequestsException;
 import com.gary.web.dto.chatMessage.ChatMessageRequest;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
+import com.gary.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,11 +28,21 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final ChatCacheService chatCacheService;
 
 
+
     @Override
+    @LoggableAction("Send Chat Message")
+    @Timed("chat.message.send.duration")
+    @RetryableOperation(maxAttempts = 3, retryOn = {RuntimeException.class})
     public ChatMessageResponse sendMessage(ChatMessageRequest request, Long senderId) {
+
         if (!rateLimiterService.isAllowedToSend(senderId)) {
+            log.warn("Rate limit exceeded for senderId={}", senderId);
             throw new TooManyRequestsException("You're sending messages too quickly. Please wait.");
         }
+
+        String contentPreview = request.content().trim();
+        log.info("Processing message from senderId={} to receiverId={} (length={} chars)",
+                senderId, request.receiverId(), contentPreview.length());
 
         ChatMessage message = ChatMessage.builder()
                 .senderId(senderId)
@@ -39,15 +51,33 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        ChatMessage saved = chatMessageRepository.save(message);
-        ChatMessageResponse response = ChatMessageResponse.fromEntity(saved);
 
-        chatCacheService.cacheMessage(response);
+        //try catch
+        ChatMessage savedMessage = chatMessageRepository.save(message);
+
+        log.info("Message saved to DB: id={}, senderId={}, receiverId={}",
+                savedMessage.getId(), senderId, request.receiverId());
+
+        ChatMessageResponse response = ChatMessageResponse.fromEntity(savedMessage);
+
+        try {
+
+            chatCacheService.cacheMessage(response);
+
+        } catch (DataAccessException e) {
+
+            log.warn("Message persisted to DB, but caching threw exception: {}", e.getMessage());
+
+        }
+
         return response;
     }
 
     @Override
+    @LoggableAction("Get Chat History")
+    @Timed("chat.message.getHistory.duration")
     public List<ChatMessageResponse> getChatHistory(Long user1Id, Long user2Id, int offset, int limit) {
+
         List<ChatMessageResponse> cachedMessages = chatCacheService.getCachedMessages(user1Id, user2Id, offset, limit);
 
         if (cachedMessages != null && !cachedMessages.isEmpty()) {
@@ -65,5 +95,4 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         return responses;
     }
-
 }

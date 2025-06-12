@@ -1,4 +1,4 @@
-import com.gary.application.cache.ChatCacheServiceImpl;
+import com.gary.application.cache.chat.ChatCacheServiceImpl;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,7 +88,7 @@ class ChatCacheServiceImplTest {
     @Test
     void evictChatCache_shouldDeleteRedisKey() {
         // when
-        chatCacheService.evictChatCache(senderId, receiverId);
+        chatCacheService.clearCachedMessages(senderId, receiverId);
 
         // then
         verify(redisTemplate).delete(expectedKey);

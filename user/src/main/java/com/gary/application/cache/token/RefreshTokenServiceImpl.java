@@ -1,4 +1,4 @@
-package com.gary.application.token;
+package com.gary.application.cache.token;
 
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.model.token.RefreshToken;

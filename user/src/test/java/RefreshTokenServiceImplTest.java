@@ -1,5 +1,5 @@
 
-import com.gary.application.token.RefreshTokenServiceImpl;
+import com.gary.application.cache.token.RefreshTokenServiceImpl;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.infrastructure.constants.RedisKeys;
 import org.junit.jupiter.api.BeforeEach;

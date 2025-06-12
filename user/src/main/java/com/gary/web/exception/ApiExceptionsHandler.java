@@ -20,6 +20,8 @@ public class ApiExceptionsHandler {
         return new ResponseEntity<>(apiException, status);
     }
 
+
+
     @ExceptionHandler(FriendshipAlreadyExistsException.class)
     public ResponseEntity<Object> handleFriendshipAlreadyExists(FriendshipAlreadyExistsException e) {
         return buildResponse(e, HttpStatus.CONFLICT);

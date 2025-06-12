@@ -1,4 +1,4 @@
-package com.gary.application.presence;
+package com.gary.application.cache.presence;
 
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.presence.UserPresenceService;

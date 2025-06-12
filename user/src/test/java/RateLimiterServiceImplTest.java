@@ -1,5 +1,5 @@
 
-import com.gary.application.rateLimiter.RateLimiterServiceImpl;
+import com.gary.application.cache.rateLimiter.RateLimiterServiceImpl;
 import com.gary.infrastructure.constants.RedisKeys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
