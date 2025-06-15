@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
+
 import io.jsonwebtoken.security.Keys;
 
 @Component
@@ -35,32 +37,33 @@ public class JwtTokenUtil {
         }
     }
 
-    public String generateAccessToken(Long userId, String username) {
+    public String generateAccessToken(UUID userId, String username) {
         return buildToken(userId, username, ACCESS_TOKEN_EXPIRATION_MS);
     }
 
-    public String generateRefreshToken(Long userId, String username) {
+    public String generateRefreshToken(UUID userId, String username) {
         return buildToken(userId, username, REFRESH_TOKEN_EXPIRATION_MS);
     }
 
-    private String buildToken(Long userId, String username, long expirationMillis) {
+    private String buildToken(UUID userId, String username, long expirationMillis) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMillis);
 
         return Jwts.builder()
                 .setSubject(username)
-                .claim("id", userId)
+                .claim("id", userId.toString())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 
-    public Long extractUserId(String token) {
+    public UUID extractUserId(String token) {
         try {
-            return Long.valueOf(extractAllClaims(token).get("id").toString());
+            String idString = extractAllClaims(token).get("id").toString();
+            return UUID.fromString(idString);
         } catch (Exception e) {
-            log.error("Failed to extract user ID from token", e);
+            log.error("Failed to extract user UUID from token", e);
             throw new JwtException("Invalid token");
         }
     }

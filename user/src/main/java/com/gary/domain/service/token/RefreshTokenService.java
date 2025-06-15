@@ -1,12 +1,14 @@
 package com.gary.domain.service.token;
 
+import java.util.UUID;
+
 public interface RefreshTokenService {
-     void save(Long userId, String token);
+     void save(UUID userId, String token);
 
      boolean isValid(String token);
 
      void revoke(String token);
 
-     void revokeAll(Long userId);
+     void revokeAll(UUID userId);
 
     }

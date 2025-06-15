@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 
@@ -24,9 +25,8 @@ public class UserPresenceServiceImpl implements UserPresenceService {
     @Value("${presence.expiration.seconds}")
     private long expirationSeconds;
 
-
     @Override
-    public void refreshOnlineStatus(Long userId) {
+    public void refreshOnlineStatus(UUID userId) {
         userPresenceRedisTemplate.opsForValue().set(
                 RedisKeys.userPresence(userId),
                 onlineStatus,
@@ -37,13 +37,13 @@ public class UserPresenceServiceImpl implements UserPresenceService {
     }
 
     @Override
-    public void setOffline(Long userId) {
+    public void setOffline(UUID userId) {
         userPresenceRedisTemplate.delete(RedisKeys.userPresence(userId));
         log.debug("User {}, set offline", userId);
     }
 
     @Override
-    public boolean isOnline(Long userId) {
+    public boolean isOnline(UUID userId) {
         try {
             return userPresenceRedisTemplate.hasKey(RedisKeys.userPresence(userId));
         } catch (Exception e) {

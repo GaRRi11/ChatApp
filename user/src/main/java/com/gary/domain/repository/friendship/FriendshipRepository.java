@@ -5,14 +5,15 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
+public interface FriendshipRepository extends JpaRepository<Friendship, UUID> {
 
-    List<Friendship> findByUserId(Long userId);
+    List<Friendship> findByUserId(UUID userId);
 
-    boolean existsByUserIdAndFriendId(Long userId, Long friendId);
+    boolean existsByUserIdAndFriendId(UUID userId, UUID friendId);
 
     @Transactional
-    void deleteByUserIdAndFriendId(Long userId, Long friendId);
+    void deleteByUserIdAndFriendId(UUID userId, UUID friendId);
 
 }

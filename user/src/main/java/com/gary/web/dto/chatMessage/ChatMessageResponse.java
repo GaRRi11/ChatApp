@@ -4,12 +4,13 @@ import com.gary.domain.model.chatmessage.ChatMessage;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Builder
 public record ChatMessageResponse(
-        Long id,
-        Long senderId,
-        Long receiverId,
+        UUID id,
+        UUID senderId,
+        UUID receiverId,
         String content,
         LocalDateTime timestamp
 ) {

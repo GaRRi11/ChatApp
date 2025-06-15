@@ -12,6 +12,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -44,7 +45,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
         try {
             if (jwtTokenUtil.validateToken(token)) {
-                Long userId = jwtTokenUtil.extractUserId(token);
+                UUID userId = jwtTokenUtil.extractUserId(token);
                 if (userId == null) {
                     log.error("Extracted null userId from token in URI {}", uri);
                     return false;

@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,8 +29,8 @@ public class FriendshipServiceImpl implements FriendshipService {
 
 
     @Override
-    public List<UserResponse> getFriends(Long userId) {
-        List<Long> friendIds = friendshipRepository.findByUserId(userId).stream()
+    public List<UserResponse> getFriends(UUID userId) {
+        List<UUID> friendIds = friendshipRepository.findByUserId(userId).stream()
                 .map(Friendship::getFriendId)
                 .collect(Collectors.toList());
 
@@ -41,13 +42,13 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     @Override
-    public boolean areFriends(Long senderId, Long receiverId) {
+    public boolean areFriends(UUID senderId, UUID receiverId) {
         return friendshipRepository.existsByUserIdAndFriendId(senderId, receiverId);
     }
 
     @Transactional
     @Override
-    public void removeFriend(Long userId, Long friendId) {
+    public void removeFriend(UUID userId, UUID friendId) {
         try {
             friendshipManager.deleteBidirectional(userId, friendId, friendshipRepository);
 

@@ -5,10 +5,11 @@ import com.gary.domain.model.friendrequest.RequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface FriendRequestRepository extends JpaRepository<FriendRequest, Long> {
+public interface FriendRequestRepository extends JpaRepository<FriendRequest, UUID> {
 
-    List<FriendRequest> findBySenderIdAndStatus(Long senderId, RequestStatus status);
-    List<FriendRequest> findByReceiverIdAndStatus(Long receiverId, RequestStatus status);
-    boolean existsBySenderIdAndReceiverIdAndStatusIn(Long senderId, Long receiverId, List<RequestStatus> statuses);
+    List<FriendRequest> findBySenderIdAndStatus(UUID senderId, RequestStatus status);
+    List<FriendRequest> findByReceiverIdAndStatus(UUID receiverId, RequestStatus status);
+    boolean existsBySenderIdAndReceiverIdAndStatusIn(UUID senderId, UUID receiverId, List<RequestStatus> statuses);
 }

@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionsHandler {
@@ -20,6 +22,19 @@ public class ApiExceptionsHandler {
         return new ResponseEntity<>(apiException, status);
     }
 
+    @ExceptionHandler(RateLimiterServiceUnavailableException.class)
+    public ResponseEntity<String> handleRateLimiterUnavailable(RateLimiterServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateResourceException(DuplicateResourceException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 
 
     @ExceptionHandler(FriendshipAlreadyExistsException.class)

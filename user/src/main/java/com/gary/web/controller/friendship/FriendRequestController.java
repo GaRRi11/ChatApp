@@ -15,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/friend-requests")
@@ -28,10 +29,10 @@ public class FriendRequestController {
     @PostMapping("/send")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<FriendRequestResponse> sendRequest(
-            @RequestParam Long receiverId,
+            @RequestParam UUID receiverId,
             @AuthenticationPrincipal User authenticatedUser) {
 
-        Long senderId = authenticatedUser.getId();
+        UUID senderId = authenticatedUser.getId();
 
         log.debug("User {} sending friend request to {}", senderId, receiverId);
 
@@ -56,7 +57,7 @@ public class FriendRequestController {
         log.debug("User {} responding to friend request id={}, accept={}",
                 authenticatedUser.getId(), dto.requestId(), dto.accept());
 
-        Long userId = authenticatedUser.getId();
+        UUID userId = authenticatedUser.getId();
 
         friendRequestService.respondToRequest(dto, userId);
         return ResponseEntity.noContent().build();
@@ -67,7 +68,7 @@ public class FriendRequestController {
     public ResponseEntity<List<FriendRequestResponse>> getPendingRequests(
             @AuthenticationPrincipal User authenticatedUser) {
 
-        Long userId = authenticatedUser.getId();
+        UUID userId = authenticatedUser.getId();
         log.debug("Fetching pending friend requests for userId={}", userId);
         List<FriendRequestResponse> pendingRequests = friendRequestService.getPendingRequests(userId);
         return ResponseEntity.ok(pendingRequests);
@@ -78,7 +79,7 @@ public class FriendRequestController {
     public ResponseEntity<List<FriendRequestResponse>> getSentRequests(
             @AuthenticationPrincipal User authenticatedUser) {
 
-        Long userId = authenticatedUser.getId();
+        UUID userId = authenticatedUser.getId();
         log.debug("Fetching sent friend requests for userId={}", userId);
         List<FriendRequestResponse> sentRequests = friendRequestService.getSentRequests(userId);
         return ResponseEntity.ok(sentRequests);

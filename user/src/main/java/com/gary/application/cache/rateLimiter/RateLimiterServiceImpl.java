@@ -1,26 +1,40 @@
 package com.gary.application.cache.rateLimiter;
 
+import com.gary.annotations.LoggableAction;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-
-
-import org.springframework.data.redis.core.script.DefaultRedisScript;
-
 import java.util.Collections;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RateLimiterServiceImpl implements RateLimiterService {
 
     private final RedisTemplate<String, String> rateLimiterRedisTemplate;
 
-    private static final int MESSAGE_LIMIT = 5;
-    private static final Duration TIME_WINDOW = Duration.ofSeconds(10);
+    @Value("${message.limit}")
+    private int messageLimit;
+
+    private Duration timeWindow;
+
+    @Value("${time.window.seconds}")
+    public void setTimeWindow(long seconds) {
+        this.timeWindow = Duration.ofSeconds(seconds);
+    }
+
+    private final MeterRegistry meterRegistry;
 
     private static final String LUA_SCRIPT =
             "local current\n" +
@@ -30,15 +44,43 @@ public class RateLimiterServiceImpl implements RateLimiterService {
                     "end\n" +
                     "return current";
 
-    public boolean isAllowedToSend(Long userId) {
+    private static final String CIRCUIT_BREAKER_NAME = "redisRateLimiterCircuitBreaker";
+
+    @Override
+    @Retry(name = "redisRateLimiterRetry")
+    @CircuitBreaker(name = CIRCUIT_BREAKER_NAME, fallbackMethod = "rateLimiterFallback")
+    @LoggableAction("Is Allowed To Send")
+    public RateLimiterStatus  isAllowedToSend(UUID userId) {
+
         String key = RedisKeys.messageRateLimit(userId);
 
         Long current = rateLimiterRedisTemplate.execute(
                 new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
                 Collections.singletonList(key),
-                String.valueOf(TIME_WINDOW.getSeconds())
+                String.valueOf(timeWindow.getSeconds())
         );
 
-        return current <= MESSAGE_LIMIT;
+        if (current == null) {
+            log.warn("Redis returned null for rate limit key {}", key);
+            meterRegistry.counter("chat.message.rateLimiter", "status", "fallbackBlocked").increment();
+            return RateLimiterStatus.UNAVAILABLE;
+        }
+
+        boolean allowed = current <= messageLimit;
+
+        if (allowed) {
+            meterRegistry.counter("chat.message.rateLimiter", "status", "allowed").increment();
+            return RateLimiterStatus.ALLOWED;
+        } else {
+            meterRegistry.counter("chat.message.rateLimiter", "status", "rejected").increment();
+            return RateLimiterStatus.BLOCKED;
+        }
+    }
+
+    @LoggableAction("RateLimiter Fallback")
+    public RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t) {
+        log.error("Fallback triggered for userId {} due to {}", userId, t.toString());
+        meterRegistry.counter("chat.message.rateLimiter", "status", "fallbackBlocked").increment();
+        return RateLimiterStatus.UNAVAILABLE;
     }
 }

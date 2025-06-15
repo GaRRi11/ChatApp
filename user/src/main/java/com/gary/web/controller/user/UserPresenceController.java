@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/presence")
 @RequiredArgsConstructor
@@ -17,7 +19,7 @@ public class UserPresenceController {
     private final UserPresenceService userPresenceService;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserPresenceResponse> isOnline(@PathVariable Long userId) {
+    public ResponseEntity<UserPresenceResponse> isOnline(@PathVariable UUID userId) {
         boolean online = userPresenceService.isOnline(userId);
         return ResponseEntity.ok(new UserPresenceResponse(online));
     }

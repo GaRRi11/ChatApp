@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/friends")
@@ -23,7 +24,7 @@ public class FriendshipController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<UserResponse>> getFriends(@AuthenticationPrincipal User authenticatedUser) {
-        Long userId = authenticatedUser.getId();
+        UUID userId = authenticatedUser.getId();
 
         log.debug("Fetching friends for userId={}", userId);
         List<UserResponse> friends = friendshipService.getFriends(userId);
@@ -33,10 +34,10 @@ public class FriendshipController {
     @DeleteMapping("/remove/{friendId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeFriend(@AuthenticationPrincipal User authenticatedUser,
-                                             @PathVariable Long friendId) {
-        Long userId = authenticatedUser.getId();
+                                             @PathVariable UUID friendId) {
+        UUID userId = authenticatedUser.getId();
 
-        if (friendId == null || friendId <= 0) {
+        if (friendId == null) {
             log.warn("Invalid friendId received in removeFriend: {}", friendId);
             return ResponseEntity.badRequest().build();
         }

@@ -7,6 +7,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.WebSocketHandlerDecorator;
 import org.springframework.web.socket.WebSocketHandler;
 
+import java.util.UUID;
+
 @Slf4j
 public class UserPresenceWebSocketHandlerDecorator extends WebSocketHandlerDecorator {
 
@@ -22,7 +24,8 @@ public class UserPresenceWebSocketHandlerDecorator extends WebSocketHandlerDecor
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Object userIdObj = session.getAttributes().get(USER_ID_ATTR);
-        if (userIdObj instanceof Long userId) {
+
+        if (userIdObj instanceof UUID userId) {
             userPresenceService.refreshOnlineStatus(userId);
             log.debug("User {} connected and marked online. Session ID: {}, IP: {}",
                     userId,
@@ -39,7 +42,7 @@ public class UserPresenceWebSocketHandlerDecorator extends WebSocketHandlerDecor
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
         Object userIdObj = session.getAttributes().get(USER_ID_ATTR);
-        if (userIdObj instanceof Long userId) {
+        if (userIdObj instanceof UUID userId) {
             userPresenceService.setOffline(userId);
             log.debug("User {} disconnected and marked offline. Session ID: {}, IP: {}",
                     userId,

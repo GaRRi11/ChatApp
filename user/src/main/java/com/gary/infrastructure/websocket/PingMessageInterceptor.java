@@ -11,6 +11,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class PingMessageInterceptor implements ChannelInterceptor {
                 if (sessionAttributes != null) {
                     Object userIdObj = sessionAttributes.get(USER_ID_ATTR);
 
-                    if (userIdObj instanceof Long userId) {
+                    if (userIdObj instanceof UUID userId) {
                         userPresenceService.refreshOnlineStatus(userId);
                         log.debug("Refreshed online status for user {} (session: {})", userId, accessor.getSessionId());
                     } else {

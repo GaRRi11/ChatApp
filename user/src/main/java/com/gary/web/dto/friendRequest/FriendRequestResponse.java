@@ -5,12 +5,13 @@ import com.gary.domain.model.friendrequest.RequestStatus;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Builder
 public record FriendRequestResponse(
-        Long id,
-        Long senderId,
-        Long receiverId,
+        UUID id,
+        UUID senderId,
+        UUID receiverId,
         RequestStatus status,
         LocalDateTime createdAt,
         LocalDateTime respondedAt

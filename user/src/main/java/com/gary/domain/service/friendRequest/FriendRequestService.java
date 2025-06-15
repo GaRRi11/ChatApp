@@ -4,11 +4,12 @@ import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.friendRequest.FriendRequestResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 
 public interface FriendRequestService {
-    FriendRequestResponse sendRequest(Long senderId, Long receiverId);
-    void respondToRequest(RespondToFriendDto responseDto, Long userId);
-    List<FriendRequestResponse> getPendingRequests(Long userId);
-    List<FriendRequestResponse> getSentRequests(Long userId);
+    FriendRequestResponse sendRequest(UUID senderId, UUID receiverId);
+    void respondToRequest(RespondToFriendDto responseDto, UUID userId);
+    List<FriendRequestResponse> getPendingRequests(UUID userId);
+    List<FriendRequestResponse> getSentRequests(UUID userId);
     }

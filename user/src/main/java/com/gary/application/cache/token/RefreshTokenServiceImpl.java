@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -22,7 +23,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private static final long REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
 
     @Override
-    public void save(Long userId, String token) {
+    public void save(UUID userId, String token) {
         String key = RedisKeys.refreshToken(token);
 
         RefreshToken refreshToken = RefreshToken.builder()
@@ -86,7 +87,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    public void revokeAll(Long userId) {
+    public void revokeAll(UUID userId) {
         String userTokenSetKey = RedisKeys.refreshTokenSet(userId);
         var tokens = stringRedisTemplate.opsForSet().members(userTokenSetKey);
 

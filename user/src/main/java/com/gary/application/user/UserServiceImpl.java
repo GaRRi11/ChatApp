@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +53,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserResponse> searchByUsername(String username, Long requesterId) {
+    public List<UserResponse> searchByUsername(String username, UUID requesterId) {
         log.info("Searching users by username='{}', requested by userId={}", username, requesterId);
         return userRepository.findByUsernameContainingIgnoreCase(username).stream()
                 .filter(user -> !user.getId().equals(requesterId))
@@ -110,7 +111,7 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("Invalid refresh token");
         }
 
-        Long userId = jwtTokenUtil.extractUserId(token);
+        UUID userId = jwtTokenUtil.extractUserId(token);
         String username = jwtTokenUtil.extractUsername(token);
 
         log.info("Refreshing access token for userId={}, username={}", userId, username);
@@ -129,13 +130,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> getById(Long id) {
+    public Optional<User> getById(UUID id) {
         log.debug("Fetching user by ID: userId={}", id);
         return userRepository.findById(id);
     }
 
     @Override
-    public List<User> findAllById(List<Long> userIds) {
+    public List<User> findAllById(List<UUID> userIds) {
         log.debug("Fetching multiple users by IDs: count={}", userIds.size());
         return userRepository.findAllById(userIds);
     }

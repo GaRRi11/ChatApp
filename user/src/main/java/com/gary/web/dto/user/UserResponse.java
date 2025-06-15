@@ -2,9 +2,10 @@ package com.gary.web.dto.user;
 
 import com.gary.domain.model.user.User;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record UserResponse(
-        Long id,
+        UUID id,
         String username,
         LocalDateTime createdAt
 ) {

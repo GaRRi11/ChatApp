@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "friend_requests")
@@ -15,14 +16,15 @@ import java.time.LocalDateTime;
 public class FriendRequest {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue()
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
+    private UUID id;
 
     @Column(name = "sender_id", nullable = false)
-    private Long senderId;
+    private UUID senderId;
 
     @Column(name = "receiver_id", nullable = false)
-    private Long receiverId;
+    private UUID receiverId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

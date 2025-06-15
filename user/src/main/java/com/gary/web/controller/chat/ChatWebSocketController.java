@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/api/chat")
@@ -61,11 +62,11 @@ public class ChatWebSocketController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ChatMessageResponse>> getChatHistory(
             @AuthenticationPrincipal User user,
-            @RequestParam Long otherUserId,
+            @RequestParam UUID otherUserId,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "50") int limit) {
 
-        if (otherUserId == null || otherUserId <= 0 || user.getId().equals(otherUserId)) {
+        if (otherUserId == null || user.getId().equals(otherUserId)) {
             log.warn("Invalid request to fetch chat history. userId={}, otherUserId={}", user != null ? user.getId() : null, otherUserId);
             return ResponseEntity.badRequest().build();
         }

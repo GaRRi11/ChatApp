@@ -16,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -56,9 +57,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 return;
             }
 
-            Long userId = jwtTokenUtil.extractUserId(token);
+            UUID userId = jwtTokenUtil.extractUserId(token);
 
             Optional<User> userOpt = userService.getById(userId);
+
             if (userOpt.isEmpty()) {
                 log.warn("User not found with ID extracted from JWT token");
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");

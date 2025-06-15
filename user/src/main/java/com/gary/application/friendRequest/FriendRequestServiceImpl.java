@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public FriendRequestResponse sendRequest(Long senderId,  Long receiverId) {
+    public FriendRequestResponse sendRequest(UUID senderId, UUID receiverId) {
 
 
         boolean exists = friendRequestRepository.existsBySenderIdAndReceiverIdAndStatusIn(
@@ -60,7 +61,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     @Transactional
     @Override
-    public void respondToRequest(RespondToFriendDto dto, Long userId) {
+    public void respondToRequest(RespondToFriendDto dto, UUID userId) {
         FriendRequest request = friendRequestRepository.findById(dto.requestId())
                 .orElseThrow(() -> {
                     log.warn("Friend request not found for ID {}", dto.requestId());
@@ -87,7 +88,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
     @Override
-    public List<FriendRequestResponse> getPendingRequests(Long userId) {
+    public List<FriendRequestResponse> getPendingRequests(UUID userId) {
         log.debug("Fetching pending friend requests for userId={}", userId);
         return friendRequestRepository.findByReceiverIdAndStatus(userId, RequestStatus.PENDING).stream()
                 .map(FriendRequestResponse::fromEntity)  // convert each entity to DTO
@@ -95,7 +96,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
     @Override
-    public List<FriendRequestResponse> getSentRequests(Long userId) {
+    public List<FriendRequestResponse> getSentRequests(UUID  userId) {
         log.debug("Fetching sent friend requests by userId={}", userId);
         return friendRequestRepository.findBySenderIdAndStatus(userId, RequestStatus.PENDING).stream()
                 .map(FriendRequestResponse::fromEntity)

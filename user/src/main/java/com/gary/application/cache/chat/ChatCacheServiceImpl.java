@@ -4,6 +4,7 @@ import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.cache.ChatCacheService;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import com.gary.annotations.*;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +25,11 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @Override
     @LoggableAction("Cache Chat Message")
     @Timed("chat.cache.message.duration")
-    @RetryableOperation(maxAttempts = 2, retryOn = {RuntimeException.class})
+    @Retry()
     public void cacheMessage(ChatMessageResponse message) {
+
         String key = RedisKeys.chatMessages(message.senderId(), message.receiverId());
+
         boolean isNewKey = !chatMessageRedisTemplate.hasKey(key);
 
         chatMessageRedisTemplate.opsForList().rightPush(key, message);
@@ -40,7 +44,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @Override
     @LoggableAction("Retrieve Cached Messages")
     @Timed("chat.cache.getMessages.duration")
-    public List<ChatMessageResponse> getCachedMessages(Long user1Id, Long user2Id, int offset, int limit) {
+    public List<ChatMessageResponse> getCachedMessages(UUID user1Id, UUID user2Id, int offset, int limit) {
         String key = RedisKeys.chatMessages(user1Id, user2Id);
 
         List<ChatMessageResponse> messages = chatMessageRedisTemplate.opsForList().range(key, offset, offset + limit - 1);
@@ -59,7 +63,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @Override
     @LoggableAction("Clear Cached Messages")
     @Timed("chat.cache.clearMessages.duration")
-    public void clearCachedMessages(Long user1Id, Long user2Id) {
+    public void clearCachedMessages(UUID user1Id, UUID user2Id) {
         String key = RedisKeys.chatMessages(user1Id, user2Id);
 
         Boolean deleted = chatMessageRedisTemplate.delete(key);
