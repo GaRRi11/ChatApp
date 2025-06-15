@@ -1,6 +1,7 @@
 package com.gary.application.cache.rateLimiter;
 
 import com.gary.annotations.LoggableAction;
+import com.gary.annotations.Timed;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -44,11 +45,11 @@ public class RateLimiterServiceImpl implements RateLimiterService {
                     "end\n" +
                     "return current";
 
-    private static final String CIRCUIT_BREAKER_NAME = "redisRateLimiterCircuitBreaker";
 
     @Override
-    @Retry(name = "redisRateLimiterRetry")
-    @CircuitBreaker(name = CIRCUIT_BREAKER_NAME, fallbackMethod = "rateLimiterFallback")
+    @Timed("chat.rateLimiter.isAllowedToSend.duration")
+    @Retry(name = "defaultRetry")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "rateLimiterFallback")
     @LoggableAction("Is Allowed To Send")
     public RateLimiterStatus  isAllowedToSend(UUID userId) {
 
@@ -77,7 +78,8 @@ public class RateLimiterServiceImpl implements RateLimiterService {
         }
     }
 
-    @LoggableAction("RateLimiter Fallback")
+    @Override
+    @LoggableAction("Rate Limiter Fallback")
     public RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t) {
         log.error("Fallback triggered for userId {} due to {}", userId, t.toString());
         meterRegistry.counter("chat.message.rateLimiter", "status", "fallbackBlocked").increment();

@@ -1,5 +1,6 @@
 package com.gary.application.chat;
 
+import com.gary.application.cache.chat.CachedMessagesResult;
 import com.gary.application.cache.rateLimiter.RateLimiterStatus;
 import com.gary.domain.model.chatmessage.ChatMessage;
 import com.gary.domain.repository.chatMessage.ChatMessageRepository;
@@ -57,14 +58,21 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 return response;
 
             case BLOCKED:
+
                 log.warn("User {} is blocked by rate limiter due to sending messages too quickly.", senderId);
                 throw new TooManyRequestsException("You're sending messages too quickly. Please wait.");
 
             case UNAVAILABLE:
             default:
+
                 log.error("Rate limiter service unavailable for user {}. Throwing exception.", senderId);
                 throw new RateLimiterServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
         }
+    }
+
+    @Async("taskExecutor")
+    public void cacheMessageAsync(ChatMessageResponse response) {
+        chatCacheService.cacheMessage(response);
     }
 
     private ChatMessage buildMessageEntity(ChatMessageRequest request, UUID senderId) {
@@ -98,31 +106,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         throw new RuntimeException("Database temporarily unavailable, please try again later.");
     }
 
-    // Async cache with retries and circuit breaker
-    @Async("taskExecutor")
-    public CompletableFuture<Void> cacheMessageAsync(ChatMessageResponse response) {
-        try {
-            cacheMessageWithRetryAndCircuitBreaker(response);
-        } catch (Exception e) {
-            log.warn("Caching failed asynchronously for message id={} : {}", response.id(), e.getMessage());
-            meterRegistry.counter("chat.message.cache.failures").increment();
-            // optionally alert here
-        }
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Retry
-    @CircuitBreaker(name = CACHE_CB, fallbackMethod = "cacheFallback")
-    public void cacheMessageWithRetryAndCircuitBreaker(ChatMessageResponse response) {
-        chatCacheService.cacheMessage(response);
-        log.info("Cached message id={} successfully", response.id());
-    }
-
-    public void cacheFallback(ChatMessageResponse response, Throwable t) {
-        log.warn("Failed to cache message id={} after retries/circuit breaker: {}", response.id(), t.getMessage());
-        meterRegistry.counter("chat.message.cache.failures").increment();
-        // No throwing here to avoid impacting main flow
-    }
 
     @Override
     @LoggableAction("Get Chat History")
@@ -132,7 +115,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         List<ChatMessageResponse> cachedMessages = null;
 
         try {
-            cachedMessages = getCachedMessagesWithCircuitBreaker(user1Id, user2Id, offset, limit);
+            cachedMessages = getCachedMessagesAsync(user1Id, user2Id, offset, limit);
         } catch (Exception e) {
             log.warn("Cache read failed: {}", e.getMessage());
             meterRegistry.counter("chat.message.cache.failures").increment();
@@ -147,6 +130,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         log.info("Cache MISS for chat between {} and {}", user1Id, user2Id);
 
         // Read from DB without retries (could add if needed)
+
+        //IF YOU SEE THIS COMMENT ADD LOGIC FOR WHEN CACHE MISSED THEN RETREIVE MESSAGES FROM DB AND RECACHE THEM
         List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id, offset, limit);
 
         List<ChatMessageResponse> responses = messages.stream()
@@ -156,17 +141,40 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         // Async caching of results
         responses.forEach(this::cacheMessageAsync);
 
-        return responses;
+        CachedMessagesResult result = chatCacheService.getCachedMessages(user1Id, user2Id, offset, limit);
+
+        if (!result.fallbackUsed() && !result.messages().isEmpty()) {
+            return result.messages();
+        } else if (!result.fallbackUsed()) {
+            List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id, offset, limit);
+
+            List<ChatMessageResponse> responses = messages.stream()
+                    .map(ChatMessageResponse::fromEntity)
+                    .collect(Collectors.toList());
+
+            if (!messagesFromDb.isEmpty()) {
+                responses.forEach(this::cacheMessageAsync);
+            }
+            return messagesFromDb;
+        } else {
+            log.warn("Cache unavailable. Fetching from DB, skipping cache update.");
+
+
+            List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id, offset, limit);
+
+            List<ChatMessageResponse> responses = messages.stream()
+                    .map(ChatMessageResponse::fromEntity)
+                    .collect(Collectors.toList());
+
+            return responses;
+
+        }
     }
 
-    @CircuitBreaker(name = CACHE_CB, fallbackMethod = "getCachedMessagesFallback")
-    public List<ChatMessageResponse> getCachedMessagesWithCircuitBreaker(UUID user1Id, UUID user2Id, int offset, int limit) {
-        return chatCacheService.getCachedMessages(user1Id, user2Id, offset, limit);
+    @Async
+    public CompletableFuture<List<ChatMessageResponse>> getCachedMessagesAsync(UUID user1Id, UUID user2Id, int offset, int limit) {
+        return CompletableFuture.completedFuture(chatCacheService.getCachedMessages(user1Id, user2Id, offset, limit));
     }
 
-    public List<ChatMessageResponse> getCachedMessagesFallback(Long user1Id, Long user2Id, int offset, int limit, Throwable t) {
-        log.warn("Cache circuit breaker open or cache failure for chat between {} and {}: {}", user1Id, user2Id, t.getMessage());
-        meterRegistry.counter("chat.message.cache.failures").increment();
-        return null;  // fallback to DB
-    }
 }
+

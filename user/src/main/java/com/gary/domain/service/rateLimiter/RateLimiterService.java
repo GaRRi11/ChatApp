@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface RateLimiterService {
 
     RateLimiterStatus isAllowedToSend(UUID userId);
+
+    RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t);
     }
