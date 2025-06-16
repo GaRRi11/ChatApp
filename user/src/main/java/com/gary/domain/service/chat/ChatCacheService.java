@@ -1,9 +1,8 @@
-package com.gary.domain.service.cache;
+package com.gary.domain.service.chat;
 
-import com.gary.application.cache.chat.CachedMessagesResult;
+import com.gary.application.chat.CachedMessagesResult;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface ChatCacheService {

@@ -2,7 +2,7 @@ package com.gary.application.friendship;
 
 
 import com.gary.domain.event.friendshipRemoved.FriendshipRemovedEvent;
-import com.gary.domain.service.cache.ChatCacheService;
+import com.gary.domain.service.chat.ChatCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

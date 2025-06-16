@@ -1,7 +1,7 @@
-package com.gary.application.cache.chat;
+package com.gary.application.chat;
 
 import com.gary.infrastructure.constants.RedisKeys;
-import com.gary.domain.service.cache.ChatCacheService;
+import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import com.gary.annotations.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -27,10 +27,10 @@ public class ChatCacheServiceImpl implements ChatCacheService {
 
 
     @Override
+    @LoggableAction("Cache Chat Message")
     @Timed("chat.cache.cacheMessage.duration")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "cacheMessageFallback")
-    @LoggableAction("Is Allowed To Send")
     public void cacheMessage(ChatMessageResponse message) {
 
         String key = RedisKeys.chatMessages(message.senderId(), message.receiverId());
@@ -48,7 +48,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     }
 
     @Override
-    @LoggableAction("Cache Fallback")
+    @LoggableAction("Cache Chat Message Fallback")
     public void cacheFallback(ChatMessageResponse response, Throwable t) {
         log.warn("Failed to cache message id={} after retries/circuit breaker: {}", response.id(), t.getMessage());
         meterRegistry.counter("chat.message.cache", "status", "fallback").increment();
@@ -56,7 +56,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
 
 
     @Override
-    @LoggableAction("Retrieve Cached Messages")
+    @LoggableAction("Get Cached Messages")
     @Timed("chat.cache.getMessages.duration")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getCachedMessagesFallback")
@@ -75,9 +75,17 @@ public class ChatCacheServiceImpl implements ChatCacheService {
             meterRegistry.counter("chat.message.cache", "status", "hit").increment();
         }
 
+        ResultStatus status;
+
+        if (messages == null  || messages.isEmpty()) {
+            status = ResultStatus.MISS;
+        }else {
+            status = ResultStatus.HIT;
+        }
+
         CachedMessagesResult result = CachedMessagesResult.builder()
-                .messages(messages == null ? List.of() : messages)
-                .fallbackUsed(false)
+                .messages(messages)
+                .status(status)
                 .build();
 
         return result;
@@ -90,9 +98,9 @@ public class ChatCacheServiceImpl implements ChatCacheService {
         log.warn("Failed to get cached messages for users [{} <-> {}]: {}", user1Id, user2Id, t.getMessage());
         meterRegistry.counter("chat.message.cache", "status", "fallback").increment();
 
+
         CachedMessagesResult result = CachedMessagesResult.builder()
-                .messages(List.of())
-                .fallbackUsed(true)
+                .status(ResultStatus.FALLBACK)
                 .build();
 
         return result;
@@ -106,6 +114,10 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     public void clearCachedMessages(UUID user1Id, UUID user2Id) {
         String key = RedisKeys.chatMessages(user1Id, user2Id);
 
+        Long ttlSeconds = chatMessageRedisTemplate.getExpire(key);
+        if (ttlSeconds != null && ttlSeconds > 0) {
+            log.debug("TTL before deletion for key {}: {} seconds", key, ttlSeconds);
+        }
         Boolean deleted = chatMessageRedisTemplate.delete(key);
 
         if (deleted) {
@@ -117,6 +129,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     }
 
     @Override
+    @LoggableAction("Clear Cached Messages Fallback")
     public void clearCachedMessagesFallback(UUID user1Id, UUID user2Id, Throwable t) {
         log.warn("Failed to clear cached messages for users [{} <-> {}]: {}", user1Id, user2Id, t.getMessage());
         meterRegistry.counter("chat.message.cache", "status", "fallback_clear").increment();

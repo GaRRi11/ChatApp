@@ -91,8 +91,8 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     public List<FriendRequestResponse> getPendingRequests(UUID userId) {
         log.debug("Fetching pending friend requests for userId={}", userId);
         return friendRequestRepository.findByReceiverIdAndStatus(userId, RequestStatus.PENDING).stream()
-                .map(FriendRequestResponse::fromEntity)  // convert each entity to DTO
-                .toList();  // collect as List<FriendRequestDto>
+                .map(FriendRequestResponse::fromEntity)
+                .toList();
     }
 
     @Override

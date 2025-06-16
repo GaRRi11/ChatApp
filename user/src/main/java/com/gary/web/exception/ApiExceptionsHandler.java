@@ -22,6 +22,13 @@ public class ApiExceptionsHandler {
         return new ResponseEntity<>(apiException, status);
     }
 
+    @ExceptionHandler(MessagePersistenceException.class)
+    public ResponseEntity<String> handleMessagePersistenceException(MessagePersistenceException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+
     @ExceptionHandler(RateLimiterServiceUnavailableException.class)
     public ResponseEntity<String> handleRateLimiterUnavailable(RateLimiterServiceUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)

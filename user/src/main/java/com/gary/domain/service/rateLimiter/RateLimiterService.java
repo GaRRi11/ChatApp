@@ -1,8 +1,7 @@
 package com.gary.domain.service.rateLimiter;
 
 
-import com.gary.application.cache.rateLimiter.RateLimiterServiceImpl;
-import com.gary.application.cache.rateLimiter.RateLimiterStatus;
+import com.gary.application.rateLimiter.RateLimiterStatus;
 
 import java.util.UUID;
 

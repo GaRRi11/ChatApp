@@ -1,4 +1,4 @@
-package com.gary.application.cache.rateLimiter;
+package com.gary.application.rateLimiter;
 
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;

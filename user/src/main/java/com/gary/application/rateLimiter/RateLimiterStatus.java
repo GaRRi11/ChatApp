@@ -1,4 +1,4 @@
-package com.gary.application.cache.rateLimiter;
+package com.gary.application.rateLimiter;
 
 public enum RateLimiterStatus {
     ALLOWED,
