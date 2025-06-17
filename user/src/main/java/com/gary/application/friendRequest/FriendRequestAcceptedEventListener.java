@@ -14,11 +14,10 @@ import org.springframework.stereotype.Component;
 public class FriendRequestAcceptedEventListener {
 
     private final FriendshipManager friendshipManager;
-    private final FriendshipRepository friendshipRepository;
 
     @EventListener
     public void handleFriendRequestAccepted(FriendRequestAcceptedEvent event) {
-        friendshipManager.saveBidirectional(event.getSenderId(), event.getReceiverId(), friendshipRepository);
+        friendshipManager.saveBidirectional(event.getSenderId(), event.getReceiverId());
         log.info("Friendship created via event for sender={} and receiver={}", event.getSenderId(), event.getReceiverId());
     }
 }

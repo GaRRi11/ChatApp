@@ -1,4 +1,4 @@
-package com.gary.application.chat;
+package com.gary.application.common;
 
 public enum ResultStatus {
     HIT,

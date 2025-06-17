@@ -2,6 +2,7 @@ package com.gary.application.chat;
 
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
+import com.gary.application.common.ResultStatus;
 import com.gary.domain.model.chatmessage.ChatMessage;
 import com.gary.domain.repository.chatMessage.ChatMessageRepository;
 import com.gary.domain.service.chat.ChatMessagePersistenceService;
@@ -55,13 +56,11 @@ public class ChatPersistenceServiceImpl implements ChatMessagePersistenceService
         List<ChatMessage> messages = chatMessageRepository.findChatBetweenUsers(user1Id, user2Id, offset, limit);
         meterRegistry.counter("chat.message.find", "status", "success").increment();
 
-        PersistedMessageResult result = PersistedMessageResult
+        return PersistedMessageResult
                 .builder()
                 .messages(messages)
-                .fallbackUsed(false)
+                .status(ResultStatus.HIT)
                 .build();
-
-        return result;
     }
 
     @Override
@@ -70,12 +69,10 @@ public class ChatPersistenceServiceImpl implements ChatMessagePersistenceService
         log.error("DB find operation failed permanently: {}", t.toString());
         meterRegistry.counter("chat.message.find", "status", "fallback").increment();
 
-        PersistedMessageResult result = PersistedMessageResult
+        return PersistedMessageResult
                 .builder()
-                .fallbackUsed(true)
+                .status(ResultStatus.FALLBACK)
                 .build();
-
-        return result;
     }
 
 

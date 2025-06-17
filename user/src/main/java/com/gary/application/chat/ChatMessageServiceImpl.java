@@ -1,5 +1,6 @@
     package com.gary.application.chat;
 
+    import com.gary.application.common.ResultStatus;
     import com.gary.application.rateLimiter.RateLimiterStatus;
     import com.gary.domain.model.chatmessage.ChatMessage;
     import com.gary.domain.service.chat.ChatCacheService;
@@ -43,7 +44,7 @@
                     ChatMessage message = buildMessageEntity(request, senderId);
                     ChatMessage savedMessage = chatPersistenceService.saveMessage(message);
 
-                    if (savedMessage != null) {
+                    if (savedMessage == null) {
                         log.error("Failed to save message for sender {}", senderId);
                         throw new MessagePersistenceException("Message service is temporarily unavailable. Please try again later.");
                     }
@@ -72,6 +73,7 @@
         @LoggableAction("Get Chat History")
         @Timed("chat.message.getHistory.duration")
         public List<ChatMessageResponse> getChatHistory(UUID user1Id, UUID user2Id, int offset, int limit) {
+
             CachedMessagesResult cacheResult = chatCacheService.getCachedMessages(user1Id, user2Id, offset, limit);
 
             if (cacheResult.status() == ResultStatus.HIT) {

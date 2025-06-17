@@ -28,5 +28,5 @@ public class RefreshToken {
 
     private boolean revoked = false;
 
-    private Long expiryDate;  // timestamp in millis
+    private Long expiryDate;
 }

@@ -6,6 +6,7 @@ import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.presence.UserPresenceService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class UserPresenceServiceImpl implements UserPresenceService {
 
     private final RedisTemplate<String, String> userPresenceRedisTemplate;
+    private final MeterRegistry meterRegistry;
 
     @Value("${presence.status.online}")
     private String onlineStatus;
@@ -43,21 +45,48 @@ public class UserPresenceServiceImpl implements UserPresenceService {
                 TimeUnit.SECONDS
         );
         log.debug("Refreshed online status for user {}", userId);
+        meterRegistry.counter("presence.status", "operation", "refresh", "status", "success").increment();
     }
 
+    @LoggableAction("Refresh Online Status Fallback")
+    public void refreshOnlineStatusFallback(UUID userId, Throwable t) {
+        log.warn("Failed to refresh online status for user {}: {}", userId, t.getMessage());
+        meterRegistry.counter("presence.status", "operation", "refresh", "status", "fallback").increment();
+    }
+
+
     @Override
+    @LoggableAction("Set Offline Status")
+    @Timed("presence.setOffline.duration")
+    @Retry(name = "defaultRetry")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "setOfflineFallback")
     public void setOffline(UUID userId) {
         userPresenceRedisTemplate.delete(RedisKeys.userPresence(userId));
         log.debug("User {}, set offline", userId);
     }
 
+    @LoggableAction("Set Offline Fallback")
+    public void setOfflineFallback(UUID userId, Throwable t) {
+        log.warn("Failed to set user {} offline: {}", userId, t.getMessage());
+        meterRegistry.counter("presence.status", "operation", "offline", "status", "fallback").increment();
+    }
+
+
     @Override
+    @LoggableAction("Check Online Status")
+    @Timed("presence.isOnline.duration")
+    @Retry(name = "defaultRetry")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "isOnlineFallback")
     public boolean isOnline(UUID userId) {
-        try {
-            return userPresenceRedisTemplate.hasKey(RedisKeys.userPresence(userId));
-        } catch (Exception e) {
-            log.error("Redis error while checking online status for userId {}", userId, e);
-            return false;
-        }
+        boolean result = userPresenceRedisTemplate.hasKey(RedisKeys.userPresence(userId));
+        meterRegistry.counter("presence.status", "operation", "check", "status", result ? "online" : "offline").increment();
+        return result;
+    }
+
+    @LoggableAction("Check Online Status Fallback")
+    public boolean isOnlineFallback(UUID userId, Throwable t) {
+        log.warn("Failed to check online status for user {}: {}", userId, t.getMessage());
+        meterRegistry.counter("presence.status", "operation", "check", "status", "fallback").increment();
+        return false;
     }
 }

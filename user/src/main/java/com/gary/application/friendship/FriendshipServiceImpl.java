@@ -50,7 +50,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     public void removeFriend(UUID userId, UUID friendId) {
         try {
-            friendshipManager.deleteBidirectional(userId, friendId, friendshipRepository);
+            friendshipManager.deleteBidirectional(userId, friendId);
 
             eventPublisher.publishEvent(new FriendshipRemovedEvent(this, userId, friendId));
 

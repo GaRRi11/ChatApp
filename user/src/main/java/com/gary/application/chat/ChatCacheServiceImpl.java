@@ -1,5 +1,6 @@
 package com.gary.application.chat;
 
+import com.gary.application.common.ResultStatus;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
@@ -61,34 +62,29 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getCachedMessagesFallback")
     public CachedMessagesResult getCachedMessages(UUID user1Id, UUID user2Id, int offset, int limit) {
+
         String key = RedisKeys.chatMessages(user1Id, user2Id);
 
         List<ChatMessageResponse> messages = chatMessageRedisTemplate.opsForList().range(key, offset, offset + limit - 1);
+
+        ResultStatus status;
 
         if (messages == null || messages.isEmpty()) {
             log.info("No cached messages found for users [{} <-> {}] with offset={} and limit={}",
                     user1Id, user2Id, offset, limit);
             meterRegistry.counter("chat.message.cache", "status", "miss").increment();
+            status = ResultStatus.MISS;
         } else {
             log.info("Retrieved {} cached messages for users [{} <-> {}] with offset={} and limit={}",
                     messages.size(), user1Id, user2Id, offset, limit);
             meterRegistry.counter("chat.message.cache", "status", "hit").increment();
-        }
-
-        ResultStatus status;
-
-        if (messages == null  || messages.isEmpty()) {
-            status = ResultStatus.MISS;
-        }else {
             status = ResultStatus.HIT;
         }
 
-        CachedMessagesResult result = CachedMessagesResult.builder()
+        return CachedMessagesResult.builder()
                 .messages(messages)
                 .status(status)
                 .build();
-
-        return result;
     }
 
 
