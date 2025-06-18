@@ -22,7 +22,6 @@ public class JwtTokenUtil {
     private String jwtSecret;
 
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000L; // 24 hours
-    private static final long REFRESH_TOKEN_EXPIRATION_MS = ACCESS_TOKEN_EXPIRATION_MS * 7; // 7 days
 
     private Key signingKey;
 
@@ -39,10 +38,6 @@ public class JwtTokenUtil {
 
     public String generateAccessToken(UUID userId, String username) {
         return buildToken(userId, username, ACCESS_TOKEN_EXPIRATION_MS);
-    }
-
-    public String generateRefreshToken(UUID userId, String username) {
-        return buildToken(userId, username, REFRESH_TOKEN_EXPIRATION_MS);
     }
 
     private String buildToken(UUID userId, String username, long expirationMillis) {

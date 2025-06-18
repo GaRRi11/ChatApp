@@ -1,8 +1,10 @@
 package com.gary.application.user;
 
+import com.gary.application.common.ResultStatus;
+import com.gary.application.token.RefreshTokenResponse;
+import com.gary.application.token.TokenServiceImpl;
 import com.gary.domain.model.user.User;
 import com.gary.domain.repository.user.UserRepository;
-import com.gary.domain.service.token.RefreshTokenService;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.exception.DuplicateResourceException;
 import com.gary.web.exception.UnauthorizedException;
@@ -33,8 +35,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
-    private final RefreshTokenService refreshTokenService;
     private final MeterRegistry meterRegistry;
+    private final TokenServiceImpl tokenService;
 
 
     @Override
@@ -105,14 +107,12 @@ public class UserServiceImpl implements UserService {
         }
 
         String accessToken = jwtTokenUtil.generateAccessToken(user.getId(), user.getUsername());
-        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getId(), user.getUsername());
+        String refreshToken = tokenService.create(user.getId()).getToken();
 
-        try {
-            refreshTokenService.save(user.getId(), refreshToken);
-        } catch (Exception e) {
-            meterRegistry.counter("user.refresh_token", "status", "cache_fail").increment();
-            log.warn("Failed to store refresh token: {}", e.getMessage());
+        if (refreshToken == null) {
+            throw new RuntimeException("Failed to login try later");
         }
+
         log.info("Login successful: userId={}, username={}", user.getId(), user.getUsername());
 
         meterRegistry.counter("user.login", "status", "success").increment();
@@ -132,14 +132,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public void logout(User user) {
         log.info("Logout requested: userId={}, username={}", user.getId(), user.getUsername());
-        try {
-            refreshTokenService.revokeAll(user.getId());
-            meterRegistry.counter("user.logout", "status", "success").increment();
+        boolean succes = tokenService.deleteByUser(user.getId());
+        if (succes) {
             log.info("Logout successful: userId={}, username={}", user.getId(), user.getUsername());
-        } catch (Exception e) {
-            meterRegistry.counter("user.logout", "status", "failure").increment();
-            log.warn("Failed to revoke tokens during logout: {}", e.getMessage());
+        }else {
+            log.warn("Failed to revoke tokens during logout");
         }
+
     }
 
     @Override
@@ -147,41 +146,39 @@ public class UserServiceImpl implements UserService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "fallbackRefreshToken")
     public LoginResponseDto refreshToken(String token) {
-        if (!jwtTokenUtil.validateToken(token)) {
-            meterRegistry.counter("user.refresh_token", "status", "invalid_jwt").increment();
-            log.warn("Refresh token validation failed: reason=invalid JWT");
-            throw new UnauthorizedException("Invalid refresh token");
+
+        RefreshTokenResponse verifiedTokenResponse = verifiedTokenResponse = tokenService.verify(token);
+
+        if (verifiedTokenResponse.resultStatus() == ResultStatus.FALLBACK) {
+            throw new RuntimeException("Failed to verify token");
         }
 
-        if (!refreshTokenService.isValid(token)) {
-            meterRegistry.counter("user.refresh_token", "status", "revoked").increment();
-            log.warn("Refresh token validation failed: reason=revoked or expired");
-            throw new UnauthorizedException("Invalid refresh token");
+
+        if (verifiedTokenResponse.resultStatus() == ResultStatus.MISS) {
+            meterRegistry.counter("user.refresh_token", "status", "invalid").increment();
+            log.warn("Refresh token verification failed");
+            throw new UnauthorizedException("Invalid or expired refresh token");
         }
 
-        UUID userId = jwtTokenUtil.extractUserId(token);
-        String username = jwtTokenUtil.extractUsername(token);
+        UUID userId = verifiedTokenResponse.refreshToken().getUserId();
+        Optional<User> userOptional = userRepository.findById(userId);
 
-        log.info("Refreshing access token for userId={}, username={}", userId, username);
-
-        refreshTokenService.revoke(token); // revoke old token
-        String newAccessToken = jwtTokenUtil.generateAccessToken(userId, username);
-        String newRefreshToken = jwtTokenUtil.generateRefreshToken(userId, username);
-
-        try {
-            refreshTokenService.save(userId, newRefreshToken);
-        } catch (Exception e) {
-            meterRegistry.counter("user.refresh_token", "status", "cache_fail").increment();
-            log.warn("Failed to store new refresh token: {}", e.getMessage());
+        if (userOptional.isEmpty()) {
+            throw new UnauthorizedException("User not found");
         }
 
-        log.info("Refresh token succeeded: userId={}, username={}", userId, username);
+        User user = userOptional.get();
+
+        String newAccessToken = jwtTokenUtil.generateAccessToken(userId, user.getUsername());
+
+        log.info("Refresh token succeeded: userId={}, username={}", userId, user.getUsername());
 
         return LoginResponseDto.builder()
                 .token(newAccessToken)
-                .refreshToken(newRefreshToken)
+                .refreshToken(null)
                 .build();
     }
+
 
     public LoginResponseDto fallbackRefreshToken(String token, Throwable e) {
         meterRegistry.counter("user.refresh_token", "status", "failure").increment();

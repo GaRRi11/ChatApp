@@ -22,6 +22,14 @@ public class ApiExceptionsHandler {
         return new ResponseEntity<>(apiException, status);
     }
 
+    @ExceptionHandler(RespondToRequestServiceUnavailableException.class)
+    public ResponseEntity<String> handleRespondToRequestServiceUnavailableException(RespondToRequestServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+
+
     @ExceptionHandler(MessagePersistenceException.class)
     public ResponseEntity<String> handleMessagePersistenceException(MessagePersistenceException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)

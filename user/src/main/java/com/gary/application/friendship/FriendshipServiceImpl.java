@@ -1,12 +1,16 @@
 package com.gary.application.friendship;
 
+import com.gary.annotations.LoggableAction;
+import com.gary.annotations.Timed;
 import com.gary.domain.model.friendship.Friendship;
 import com.gary.domain.model.user.User;
 import com.gary.domain.repository.friendship.FriendshipRepository;
-import com.gary.domain.event.friendshipRemoved.FriendshipRemovedEvent;
+import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.friendship.FriendshipService;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.user.UserResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +29,13 @@ public class FriendshipServiceImpl implements FriendshipService {
     private final FriendshipRepository friendshipRepository;
     private final UserService userService;
     private final FriendshipManager friendshipManager;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ChatCacheService chatCacheService;
 
 
     @Override
+    @Timed("friendship.get.duration")
+    @Retry(name = "defaultRetry")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "getFriendsFallback")
     public List<UserResponse> getFriends(UUID userId) {
         List<UUID> friendIds = friendshipRepository.findByUserId(userId).stream()
                 .map(Friendship::getFriendId)
@@ -41,9 +48,23 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .collect(Collectors.toList());
     }
 
+
+    public List<UserResponse> getFriendsFallback(UUID userId, Throwable t) {
+        log.warn("Fallback triggered: Could not fetch friends for userId={}", userId, t);
+        return List.of(); // or return a cached version if available
+    }
+
+
     @Override
+    @Retry(name = "defaultRetry")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "areFriendsFallback")
     public boolean areFriends(UUID senderId, UUID receiverId) {
         return friendshipRepository.existsByUserIdAndFriendId(senderId, receiverId);
+    }
+
+    public boolean areFriendsFallback(UUID senderId, UUID receiverId, Throwable t) {
+        log.warn("Fallback triggered: Could not check friendship between {} and {}", senderId, receiverId, t);
+        return false;
     }
 
     @Transactional
@@ -52,11 +73,12 @@ public class FriendshipServiceImpl implements FriendshipService {
         try {
             friendshipManager.deleteBidirectional(userId, friendId);
 
-            eventPublisher.publishEvent(new FriendshipRemovedEvent(this, userId, friendId));
+            chatCacheService.clearCachedMessages(userId, friendId);
 
             log.info("Removed friendship and evicted cache for userId={} and friendId={}", userId, friendId);
         } catch (RuntimeException e) {
             log.error("Failed to remove friendship between userId={} and friendId={}", userId, friendId, e);
         }
     }
+
 }

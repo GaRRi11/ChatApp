@@ -2,9 +2,11 @@ package com.gary.application.token;
 
 import com.gary.application.common.ResultStatus;
 import com.gary.domain.model.token.RefreshToken;
+import lombok.Builder;
 
-public record TokenResult(
+@Builder
+public record RefreshTokenResponse(
         RefreshToken refreshToken,
-        ResultStatus status
+        ResultStatus resultStatus
 ) {
 }
