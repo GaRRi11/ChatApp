@@ -3,6 +3,7 @@ package com.gary.application.rateLimiter;
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
 import com.gary.application.common.MetricIncrement;
+import com.gary.application.common.TimeFormat;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -65,25 +66,28 @@ public class RateLimiterServiceImpl implements RateLimiterService {
 
         if (current == null) {
             log.warn("Redis returned null for rate limit key {}", key);
-            metricIncrement.incrementMetric("rateLimiter.isAllowed","fallback");
+            metricIncrement.incrementMetric("rateLimiter.isAllowed", "fallback");
             return RateLimiterStatus.UNAVAILABLE;
         }
 
         boolean allowed = current <= messageLimit;
 
         if (allowed) {
-            metricIncrement.incrementMetric("rateLimiter.isAllowed","allowed");
+            metricIncrement.incrementMetric("rateLimiter.isAllowed", "allowed");
             return RateLimiterStatus.ALLOWED;
         } else {
-            metricIncrement.incrementMetric("rateLimiter.isAllowed","rejected");
+            log.warn("Timestamp='{}' User {} is blocked by rate limiter due to sending messages too quickly.",
+                    TimeFormat.nowTimestamp(), userId);
+            metricIncrement.incrementMetric("rateLimiter.isAllowed", "rejected");
             return RateLimiterStatus.BLOCKED;
         }
     }
 
     @LoggableAction("Rate Limiter Fallback")
     RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t) {
-        log.error("Fallback triggered for userId {} due to {}", userId, t.toString());
-        metricIncrement.incrementMetric("rateLimiter.isAllowed","fallback");
+        log.error("Timestamp='{}' Fallback triggered for userId {} due to: {}",
+                TimeFormat.nowTimestamp(), userId, t.toString(), t);
+        metricIncrement.incrementMetric("rateLimiter.isAllowed", "fallback");
         return RateLimiterStatus.UNAVAILABLE;
     }
 }

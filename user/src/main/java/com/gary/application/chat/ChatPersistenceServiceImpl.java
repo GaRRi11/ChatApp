@@ -4,6 +4,7 @@ import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
 import com.gary.application.common.MetricIncrement;
 import com.gary.application.common.ResultStatus;
+import com.gary.application.common.TimeFormat;
 import com.gary.domain.model.chatmessage.ChatMessage;
 import com.gary.domain.repository.chatMessage.ChatMessageRepository;
 import com.gary.domain.service.chat.ChatMessagePersistenceService;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,9 +41,13 @@ public class ChatPersistenceServiceImpl implements ChatMessagePersistenceService
         return saved;
     }
 
-    @LoggableAction("Save Chat Message Fallback")
     ChatMessage dbSaveFallback(ChatMessage message, Throwable t) {
-        log.error("DB save operation failed permanently: {}", t.toString());
+        log.error("Timestamp='{}' DB save failed permanently. Message senderId={}, receiverId={}, content='{}'. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                message.getSenderId(),
+                message.getReceiverId(),
+                message.getContent().substring(0, Math.min(100, message.getContent().length())),  // trim for safety
+                t.toString());
         metricIncrement.incrementMetric("db.chat.message.save","fallback");
         return null;
     }
@@ -62,9 +69,15 @@ public class ChatPersistenceServiceImpl implements ChatMessagePersistenceService
                 .build();
     }
 
-    @LoggableAction("Find Chat Between Users Fallback")
     PersistedMessageResult findChatFallback(UUID user1Id, UUID user2Id, int offset, int limit, Throwable t) {
-        log.error("DB find operation failed permanently: {}", t.toString());
+
+        log.error("Timestamp='{}' DB find operation failed permanently for users [{} <-> {}]. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                user1Id,
+                user2Id,
+                t.toString(),
+                t);
+
         metricIncrement.incrementMetric("db.chat.message.find","fallback");
 
         return PersistedMessageResult

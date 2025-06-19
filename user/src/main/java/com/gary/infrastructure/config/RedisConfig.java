@@ -31,10 +31,6 @@ public class RedisConfig {
         return buildTemplate(String.class, factory);
     }
 
-    @Bean
-    public RedisTemplate<String, RefreshToken> refreshTokenRedisTemplate(LettuceConnectionFactory factory) {
-        return buildTemplate(RefreshToken.class, factory);
-    }
 
     @Bean
     public RedisTemplate<String, ChatMessageResponse> chatMessageRedisTemplate(LettuceConnectionFactory factory) {

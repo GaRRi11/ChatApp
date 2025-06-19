@@ -2,6 +2,7 @@ package com.gary.application.chat;
 
 import com.gary.application.common.MetricIncrement;
 import com.gary.application.common.ResultStatus;
+import com.gary.application.common.TimeFormat;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
@@ -15,6 +16,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,13 +49,20 @@ public class ChatCacheServiceImpl implements ChatCacheService {
             log.info("New Redis key created: {}. Expiration set to {} hours", key, MESSAGE_EXPIRATION.toHours());
         }
 
-        metricIncrement.incrementMetric("cache.chat.message.save","success");
+        metricIncrement.incrementMetric("cache.chat.message.save", "success");
     }
 
-    @LoggableAction("Cache Chat Message Fallback")
     void cacheFallback(ChatMessageResponse response, Throwable t) {
-        log.warn("Failed to cache message id={} after retries/circuit breaker: {}", response.id(), t.getMessage());
-        metricIncrement.incrementMetric("cache.chat.message.save","fallback");
+
+        log.warn("Timestamp='{}' Cache save failed permanently. Message id={}, senderId={}, receiverId={}, content='{}'. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                response.id(),
+                response.senderId(),
+                response.receiverId(),
+                response.content().substring(0, Math.min(100, response.content().length())),
+                t.toString());
+
+        metricIncrement.incrementMetric("cache.chat.message.save", "fallback");
     }
 
 
@@ -70,14 +80,14 @@ public class ChatCacheServiceImpl implements ChatCacheService {
         ResultStatus status;
 
         if (messages == null || messages.isEmpty()) {
-            log.info("No cached messages found for users [{} <-> {}] with offset={} and limit={}",
-                    user1Id, user2Id, offset, limit);
-            metricIncrement.incrementMetric("cache.chat.message.get","miss");
+            log.info("Timestamp='{}' No cached messages found for users [{} <-> {}] with offset={} and limit={}",
+                    TimeFormat.nowTimestamp(), user1Id, user2Id, offset, limit);
+            metricIncrement.incrementMetric("cache.chat.message.get", "miss");
             status = ResultStatus.MISS;
         } else {
-            log.info("Retrieved {} cached messages for users [{} <-> {}] with offset={} and limit={}",
-                    messages.size(), user1Id, user2Id, offset, limit);
-            metricIncrement.incrementMetric("cache.chat.message.get","hit");
+            log.info("Timestamp='{}' {} cached messages for users [{} <-> {}] with offset={} and limit={}",
+                    TimeFormat.nowTimestamp(), messages.size(), user1Id, user2Id, offset, limit);
+            metricIncrement.incrementMetric("cache.chat.message.get", "hit");
             status = ResultStatus.HIT;
         }
 
@@ -88,17 +98,22 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     }
 
 
-    @LoggableAction("Get Cached Messages Fallback")
     CachedMessagesResult getCachedMessagesFallback(UUID user1Id, UUID user2Id, int offset, int limit, Throwable t) {
-        log.warn("Failed to get cached messages for users [{} <-> {}]: {}", user1Id, user2Id, t.getMessage());
-        metricIncrement.incrementMetric("cache.chat.message.get","fallback");
+
+        log.warn("Timestamp='{}' Failed to get cached messages permanently. Users [{} <-> {}], offset={}, limit={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                user1Id,
+                user2Id,
+                offset,
+                limit,
+                t.toString());
+
+        metricIncrement.incrementMetric("cache.chat.message.get", "fallback");
 
 
-        CachedMessagesResult result = CachedMessagesResult.builder()
+        return CachedMessagesResult.builder()
                 .status(ResultStatus.FALLBACK)
                 .build();
-
-        return result;
     }
 
     @Override
@@ -107,28 +122,31 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "clearCachedMessagesFallback")
     public void clearCachedMessages(UUID user1Id, UUID user2Id) {
+
         String key = RedisKeys.chatMessages(user1Id, user2Id);
 
-        Long ttlSeconds = chatMessageRedisTemplate.getExpire(key);
-        if (ttlSeconds != null && ttlSeconds > 0) {
-            log.debug("TTL before deletion for key {}: {} seconds", key, ttlSeconds);
-        }
         Boolean deleted = chatMessageRedisTemplate.delete(key);
 
         if (deleted) {
-            log.info("Evicted chat cache for users [{} <-> {}] (key={})", user1Id, user2Id, key);
+            log.info("Timestamp='{}' Evicted chat cache for users [{} <-> {}] (key={})",
+                    TimeFormat.nowTimestamp(), user1Id, user2Id, key);
         } else {
-            log.warn("Attempted to evict chat cache for users [{} <-> {}], but key was not found (key={})",
-                    user1Id, user2Id, key);
+            log.warn("Timestamp='{}' Attempted to evict chat cache for users [{} <-> {}], but key was not found (key={})",
+                    TimeFormat.nowTimestamp(), user1Id, user2Id, key);
         }
 
-        metricIncrement.incrementMetric("cache.chat.message.clear","success");
+        metricIncrement.incrementMetric("cache.chat.message.clear", "success");
 
     }
 
-    @LoggableAction("Clear Cached Messages Fallback")
     void clearCachedMessagesFallback(UUID user1Id, UUID user2Id, Throwable t) {
-        log.warn("Failed to clear cached messages for users [{} <-> {}]: {}", user1Id, user2Id, t.getMessage());
-        metricIncrement.incrementMetric("cache.chat.message.clear","fallback");
+
+        log.warn("Timestamp='{}' Failed to clear cached messages permanently. Users [{} <-> {}]. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                user1Id,
+                user2Id,
+                t.toString());
+
+        metricIncrement.incrementMetric("cache.chat.message.clear", "fallback");
     }
 }

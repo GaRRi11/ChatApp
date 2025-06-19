@@ -3,6 +3,7 @@ package com.gary.application.friendRequest;
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
 import com.gary.application.common.MetricIncrement;
+import com.gary.application.common.TimeFormat;
 import com.gary.application.friendship.FriendshipManager;
 import com.gary.domain.model.friendrequest.FriendRequest;
 import com.gary.domain.model.friendrequest.RequestStatus;
@@ -53,9 +54,6 @@ public class FriendRequestServiceImpl implements FriendRequestService {
             throw new DuplicateResourceException("Friend request already exists");
         }
 
-
-        log.info("Processing friend request from {} to {}", senderId, receiverId);
-
         FriendRequest newRequest = FriendRequest.builder()
                 .senderId(senderId)
                 .receiverId(receiverId)
@@ -75,7 +73,11 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     FriendRequestResponse sendRequestFallback(UUID senderId, UUID receiverId, Throwable t) {
 
-        log.warn("Failed to send friend request for {} to {}", senderId, receiverId);
+        log.warn("Timestamp='{}' Failed to send friend request from senderId={} to receiverId={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                senderId,
+                receiverId,
+                t.toString());
 
         metricIncrement.incrementMetric("friend.request.send", "fallback");
 
@@ -98,12 +100,17 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         FriendRequest request = friendRequestRepository.findById(dto.requestId())
                 .orElseThrow(() -> {
-                    log.warn("Friend request not found for ID {}", dto.requestId());
+                    log.warn("Timestamp='{}' Friend request not found for requestId={}.",
+                            TimeFormat.nowTimestamp(),
+                            dto.requestId());
                     return new FriendRequestNotFoundException(dto.requestId());
                 });
 
         if (!request.getReceiverId().equals(userId)) {
-            log.warn("User {} is not authorized to respond to friend request {}", userId, dto.requestId());
+            log.warn("Timestamp='{}' User {} is not authorized to respond to friend request {}.",
+                    TimeFormat.nowTimestamp(),
+                    userId,
+                    dto.requestId());
             throw new UnauthorizedException("You are not authorized to respond to this friend request");
         }
 
@@ -115,9 +122,15 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         if (newStatus == RequestStatus.ACCEPTED) {
             friendshipManager.saveBidirectional(request.getSenderId(), request.getReceiverId());
-            log.info("Accepted friend request between {} and {}", request.getSenderId(), request.getReceiverId());
+            log.info("Timestamp='{}' Accepted friend request between {} and {}.",
+                    TimeFormat.nowTimestamp(),
+                    request.getSenderId(),
+                    request.getReceiverId());
         } else {
-            log.info("Declined friend request between {} and {}", request.getSenderId(), request.getReceiverId());
+            log.info("Timestamp='{}' Declined friend request between {} and {}.",
+                    TimeFormat.nowTimestamp(),
+                    request.getSenderId(),
+                    request.getReceiverId());
         }
 
 
@@ -126,35 +139,44 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
     void respondToRequestFallback(RespondToFriendDto dto, UUID userId, Throwable t) {
-        log.warn("Failed to respond to friend request for {} to {}", userId, dto.requestId());
+        log.warn("Timestamp='{}' Failed to respond to friend request from user {} to requestId={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                userId,
+                dto.requestId(),
+                t.toString());
+
         metricIncrement.incrementMetric("friend.request.respond", "fallback");
+
         throw new RespondToRequestServiceUnavailableException("Service temporarily unavailable. Please try again later.");
     }
 
     @Override
+    @LoggableAction("Get Pending Friend Requests")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getPendingRequestsFallback")
     public List<FriendRequestResponse> getPendingRequests(UUID userId) {
-
-        log.debug("Fetching pending friend requests for userId={}", userId);
 
         return friendRequestRepository
                 .findByReceiverIdAndStatus(userId, RequestStatus.PENDING).stream()
                 .map(FriendRequestResponse::fromEntity)
                 .toList();
+
     }
 
     List<FriendRequestResponse> getPendingRequestsFallback(UUID userId, Throwable t) {
-        log.warn("Fallback: Failed to fetch pending friend requests for userId={}", userId, t);
+        log.warn("Timestamp='{}' Fallback: Failed to fetch pending friend requests for userId={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                userId,
+                t.toString());
+
         return Collections.emptyList();
     }
 
     @Override
+    @LoggableAction("Get Sent Friend Requests")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getSentRequestsFallback")
     public List<FriendRequestResponse> getSentRequests(UUID userId) {
-
-        log.debug("Fetching sent friend requests by userId={}", userId);
 
         return friendRequestRepository
                 .findBySenderIdAndStatus(userId, RequestStatus.PENDING).stream()
@@ -163,7 +185,10 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
     List<FriendRequestResponse> getSentRequestsFallback(UUID userId, Throwable t) {
-        log.warn("Fallback: Failed to fetch sent friend requests for userId={}", userId, t);
+        log.warn("Timestamp='{}' Fallback: Failed to fetch sent friend requests for userId={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                userId,
+                t.toString());
         return Collections.emptyList();
     }
 
