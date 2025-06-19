@@ -7,9 +7,18 @@ import java.util.List;
 import java.util.UUID;
 
 
-public interface FriendRequestService {
+public interface
+FriendRequestService {
+
     FriendRequestResponse sendRequest(UUID senderId, UUID receiverId);
+
+
     void respondToRequest(RespondToFriendDto responseDto, UUID userId);
+
+
     List<FriendRequestResponse> getPendingRequests(UUID userId);
+
+
     List<FriendRequestResponse> getSentRequests(UUID userId);
-    }
+
+}

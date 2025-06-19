@@ -98,7 +98,7 @@
 
             if (cacheResult.status() == ResultStatus.MISS && !responses.isEmpty()) {
                 log.info("Caching {} messages for users [{} <-> {}]", responses.size(), user1Id, user2Id);
-                responses.forEach(chatCacheService::cacheMessage);
+                responses.forEach(chatCacheService::save);
             }
 
             return responses;
@@ -107,7 +107,7 @@
 
         @Async("taskExecutor")
         public void cacheMessageAsync(ChatMessageResponse response) {
-            chatCacheService.cacheMessage(response);
+            chatCacheService.save(response);
         }
 
         private ChatMessage buildMessageEntity(ChatMessageRequest request, UUID senderId) {

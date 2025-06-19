@@ -1,5 +1,6 @@
 package com.gary.web.controller.friendship;
 
+import com.gary.application.common.ResultStatus;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendRequest.FriendRequestService;
 import com.gary.domain.service.friendship.FriendshipService;
@@ -36,7 +37,13 @@ public class FriendRequestController {
 
         log.debug("User {} sending friend request to {}", senderId, receiverId);
 
-        if (friendshipService.areFriends(senderId, receiverId)) {
+        if (friendshipService.areFriends(senderId,receiverId) == ResultStatus.FALLBACK){
+            log.warn("Failed to send friend request from {} to {}",senderId, senderId);
+            throw new RuntimeException("Failed to send friend request from " + senderId +
+                    " to " + receiverId + "Try again later");
+        }
+
+        if (friendshipService.areFriends(senderId, receiverId) ==  ResultStatus.HIT) {
             log.warn("Users {} and {} are already friends", senderId, receiverId);
             throw new FriendshipAlreadyExistsException(senderId, receiverId);
         }

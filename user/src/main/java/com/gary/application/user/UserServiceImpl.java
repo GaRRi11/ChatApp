@@ -1,8 +1,11 @@
 package com.gary.application.user;
 
+import com.gary.annotations.LoggableAction;
+import com.gary.annotations.Timed;
+import com.gary.application.common.MetricIncrement;
 import com.gary.application.common.ResultStatus;
 import com.gary.application.token.RefreshTokenResponse;
-import com.gary.application.token.TokenServiceImpl;
+import com.gary.application.token.RefreshTokenServiceImpl;
 import com.gary.domain.model.user.User;
 import com.gary.domain.repository.user.UserRepository;
 import com.gary.domain.service.user.UserService;
@@ -35,12 +38,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
-    private final MeterRegistry meterRegistry;
-    private final TokenServiceImpl tokenService;
+    private final RefreshTokenServiceImpl tokenService;
+    private final MetricIncrement metricIncrement;
 
 
     @Override
     @Transactional
+    @LoggableAction("User Register Token")
+    @Timed("user.register.duration")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "fallbackRegister")
     public UserResponse register(UserRequest userRequest) {
@@ -59,49 +64,53 @@ public class UserServiceImpl implements UserService {
 
         log.info("User registered successfully: userId={}, username={}", user.getId(), user.getUsername());
 
-        meterRegistry.counter("user.register", "status", "success").increment();
+        metricIncrement.incrementMetric("user.register","success");
         return UserResponse.fromEntity(user);
     }
 
-    public UserResponse fallbackRegister(UserRequest userRequest, Throwable e) {
-        meterRegistry.counter("user.register", "status", "failure").increment();
+    UserResponse fallbackRegister(UserRequest userRequest, Throwable e) {
+        metricIncrement.incrementMetric("user.register","fallback");
         log.error("Register fallback triggered: {}", e.getMessage());
         throw new RuntimeException("Registration service temporarily unavailable. Try again later.");
     }
 
     @Override
+    @Transactional
+    @LoggableAction("User Search By Username Token")
+    @Timed("user.searchByUsername.duration")
+    @Retry(name = "defaultRetry")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "searchByUsernameFallback")
     public List<UserResponse> searchByUsername(String username, UUID requesterId) {
         log.info("Searching users by username='{}', requested by userId={}", username, requesterId);
-        try {
-            List<UserResponse> result = userRepository.findByUsernameContainingIgnoreCase(username).stream()
-                    .filter(user -> !user.getId().equals(requesterId))
-                    .map(UserResponse::fromEntity)
-                    .toList();
 
-            meterRegistry.counter("user.search", "status", result.isEmpty() ? "empty" : "success").increment();
-            return result;
-        } catch (Exception e) {
-            meterRegistry.counter("user.search", "status", "failure").increment();
-            log.error("Search failed: {}", e.getMessage());
-            return Collections.emptyList();
-        }
+        List<UserResponse> result = userRepository.findByUsernameContainingIgnoreCase(username).stream()
+                .filter(user -> !user.getId().equals(requesterId))
+                .map(UserResponse::fromEntity)
+                .toList();
+
+        return result;
+    }
+
+    List<UserResponse> searchByUsernameFallback(String username, UUID requesterId, Throwable e) {
+        log.error("Search failed: {}", e.getMessage());
+        return Collections.emptyList();
     }
 
     @Override
     @Retry(name = "defaultRetry")
-    @CircuitBreaker(name = "defaultCB", fallbackMethod = "fallbackLogin")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "loginFallback")
     public LoginResponseDto login(UserRequest userRequest) {
         log.info("Login attempt: username={}", userRequest.username());
 
         User user = userRepository.findByUsername(userRequest.username())
                 .orElseThrow(() -> {
                     log.warn("Login failed: username '{}' not found", userRequest.username());
-                    meterRegistry.counter("user.login", "status", "not_found").increment();
+                    metricIncrement.incrementMetric("user.login","not_found");
                     return new UnauthorizedException("Invalid credentials");
                 });
 
         if (!passwordEncoder.matches(userRequest.password(), user.getPassword())) {
-            meterRegistry.counter("user.login", "status", "invalid_password").increment();
+            metricIncrement.incrementMetric("user.login","invalid_password");
             log.warn("Login failed: invalid password for username '{}'", userRequest.username());
             throw new UnauthorizedException("Invalid credentials");
         }
@@ -115,7 +124,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("Login successful: userId={}, username={}", user.getId(), user.getUsername());
 
-        meterRegistry.counter("user.login", "status", "success").increment();
+        metricIncrement.incrementMetric("user.login","success");
 
         return LoginResponseDto.builder()
                 .token(accessToken)
@@ -123,8 +132,8 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-    public LoginResponseDto fallbackLogin(UserRequest userRequest, Throwable e) {
-        meterRegistry.counter("user.login", "status", "failure").increment();
+    LoginResponseDto fallbackLogin(UserRequest userRequest, Throwable e) {
+        metricIncrement.incrementMetric("user.login","fallback");
         log.error("Login fallback triggered: {}", e.getMessage());
         throw new RuntimeException("Login service temporarily unavailable. Try again later.");
     }
@@ -135,10 +144,10 @@ public class UserServiceImpl implements UserService {
         boolean succes = tokenService.deleteByUser(user.getId());
         if (succes) {
             log.info("Logout successful: userId={}, username={}", user.getId(), user.getUsername());
-        }else {
+        } else {
             log.warn("Failed to revoke tokens during logout");
+            throw new RuntimeException("Failed to log out try again later");
         }
-
     }
 
     @Override
@@ -147,7 +156,7 @@ public class UserServiceImpl implements UserService {
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "fallbackRefreshToken")
     public LoginResponseDto refreshToken(String token) {
 
-        RefreshTokenResponse verifiedTokenResponse = verifiedTokenResponse = tokenService.verify(token);
+        RefreshTokenResponse verifiedTokenResponse = tokenService.verify(token);
 
         if (verifiedTokenResponse.resultStatus() == ResultStatus.FALLBACK) {
             throw new RuntimeException("Failed to verify token");
@@ -155,7 +164,6 @@ public class UserServiceImpl implements UserService {
 
 
         if (verifiedTokenResponse.resultStatus() == ResultStatus.MISS) {
-            meterRegistry.counter("user.refresh_token", "status", "invalid").increment();
             log.warn("Refresh token verification failed");
             throw new UnauthorizedException("Invalid or expired refresh token");
         }
@@ -180,22 +188,19 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    public LoginResponseDto fallbackRefreshToken(String token, Throwable e) {
-        meterRegistry.counter("user.refresh_token", "status", "failure").increment();
+    LoginResponseDto fallbackRefreshToken(String token, Throwable e) {
         log.error("Refresh fallback triggered: {}", e.getMessage());
         throw new RuntimeException("Token refresh service temporarily unavailable.");
     }
 
     @Override
     public Optional<User> getById(UUID id) {
-        meterRegistry.counter("user.get_by_id", "status", "hit").increment();
         log.debug("Fetching user by ID: userId={}", id);
         try {
             return userRepository.findById(id);
         } catch (Exception e) {
-            meterRegistry.counter("user.get_by_id", "status", "failure").increment();
             log.warn("getById failed: {}", e.getMessage());
-            return Optional.empty();
+            throw new RuntimeException(e);
         }
     }
 
@@ -203,12 +208,10 @@ public class UserServiceImpl implements UserService {
     public List<User> findAllById(List<UUID> userIds) {
         log.debug("Fetching multiple users by IDs: count={}", userIds.size());
         try {
-            meterRegistry.counter("user.find_all_by_id", "status", "success").increment();
             return userRepository.findAllById(userIds);
         } catch (Exception e) {
-            meterRegistry.counter("user.find_all_by_id", "status", "failure").increment();
             log.warn("findAllById failed: {}", e.getMessage());
-            return Collections.emptyList();
+            throw new RuntimeException(e);
         }
     }
 

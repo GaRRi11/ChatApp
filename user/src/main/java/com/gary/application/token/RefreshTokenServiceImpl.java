@@ -2,16 +2,18 @@ package com.gary.application.token;
 
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
+import com.gary.application.common.MetricIncrement;
 import com.gary.application.common.ResultStatus;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.domain.repository.token.RefreshTokenRepository;
-import com.gary.infrastructure.security.JwtTokenUtil;
+import com.gary.domain.service.refreshToken.RefreshTokenService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -20,14 +22,15 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TokenServiceImpl {
+public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final MeterRegistry meterRegistry;
+    private final MetricIncrement metricIncrement;
 
-    private final long REFRESH_TOKEN_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+    @Value("${auth.refresh-token.duration-ms}")
+    private long refreshTokenDurationMs;
 
-
+    @Override
     @LoggableAction("Create Refresh Token")
     @Timed("refreshToken.create.duration")
     @Retry(name = "defaultRetry")
@@ -38,19 +41,21 @@ public class TokenServiceImpl {
                 .userId(userId)
                 .token(UUID.randomUUID().toString())
                 .revoked(false)
-                .expiryDate(Instant.now().toEpochMilli() + REFRESH_TOKEN_DURATION_MS)
+                .expiryDate(Instant.now().toEpochMilli() + refreshTokenDurationMs)
                 .build();
-        meterRegistry.counter("refresh.token.create", "status", "success").increment();
+
+        metricIncrement.incrementMetric("refresh.token.save","success");
         return refreshTokenRepository.save(token);
     }
 
-    public RefreshToken createFallback(UUID userId, Throwable t) {
+    RefreshToken createFallback(UUID userId, Throwable t) {
         log.warn("Failed to create refresh token for {} due to {}", userId, t.getMessage());
-        meterRegistry.counter("refresh.token.create", "status", "fallback").increment();
+        metricIncrement.incrementMetric("refresh.token.save","fallback");
         return null;
     }
 
 
+    @Override
     @LoggableAction("Verify Refresh Token")
     @Timed("refreshToken.verify.duration")
     @Retry(name = "defaultRetry")
@@ -66,7 +71,7 @@ public class TokenServiceImpl {
                     .build();
         }
 
-        meterRegistry.counter("refresh.token.verify", "status", "success").increment();
+        metricIncrement.incrementMetric("refresh.token.verify","success");
 
         return RefreshTokenResponse.builder()
                 .refreshToken(refreshToken)
@@ -74,9 +79,9 @@ public class TokenServiceImpl {
                 .build();
     }
 
-    public RefreshTokenResponse verifyFallback(String token, Throwable t) {
+    RefreshTokenResponse verifyFallback(String token, Throwable t) {
         log.warn("Failed to verify refresh token for {} to {}", token, t);
-        meterRegistry.counter("refresh.token.verify", "status", "fallback").increment();
+        metricIncrement.incrementMetric("refresh.token.verify","fallback");
         return RefreshTokenResponse.builder()
                 .refreshToken(null)
                 .resultStatus(ResultStatus.FALLBACK)
@@ -84,24 +89,26 @@ public class TokenServiceImpl {
     }
 
 
+    @Override
     @Transactional
     @LoggableAction("Delete Refresh Tokens")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "deleteByUserFallback")
     public boolean deleteByUser(UUID userId) {
         refreshTokenRepository.deleteByUserId(userId);
-        meterRegistry.counter("refresh.token.delete", "status", "success").increment();
+        metricIncrement.incrementMetric("refresh.token.delete","success");
         return true;
     }
 
-    public boolean deleteByUserFallback(UUID userId, Throwable t) {
+    boolean deleteByUserFallback(UUID userId, Throwable t) {
         log.warn("Failed to delete refresh token for {} to {}", userId, t);
-        meterRegistry.counter("refresh.token.delete", "status", "fallback").increment();
+        metricIncrement.incrementMetric("refresh.token.delete","fallback");
         return false;
     }
 
 
-        @LoggableAction("Clear Expired Refresh Tokens")
+    @Override
+    @LoggableAction("Clear Expired Refresh Tokens")
     @Timed("refreshToken.clearExpired.duration")
     public void clearExpiredTokens() {
         long now = Instant.now().toEpochMilli();
@@ -109,10 +116,10 @@ public class TokenServiceImpl {
             refreshTokenRepository.findAll().stream()
                     .filter(token -> token.getExpiryDate() < now)
                     .forEach(token -> refreshTokenRepository.deleteById(token.getId()));
-            meterRegistry.counter("refresh.token.delete.expired", "status", "success").increment();
+            metricIncrement.incrementMetric("refresh.token.delete.expired","success");
         } catch (Exception e) {
             log.warn("Failed to delete expired tokens: {}", e.getMessage());
-            meterRegistry.counter("refresh.token.delete.expired", "status", "failed").increment();
+            metricIncrement.incrementMetric("refresh.token.delete.expired","fallback");
         }
     }
 }

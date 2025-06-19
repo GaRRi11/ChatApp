@@ -2,6 +2,7 @@ package com.gary.application.presence;
 
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
+import com.gary.application.common.MetricIncrement;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.presence.UserPresenceService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class UserPresenceServiceImpl implements UserPresenceService {
 
     private final RedisTemplate<String, String> userPresenceRedisTemplate;
-    private final MeterRegistry meterRegistry;
+    private final MetricIncrement metricIncrement;
 
     @Value("${presence.status.online}")
     private String onlineStatus;
@@ -45,13 +46,13 @@ public class UserPresenceServiceImpl implements UserPresenceService {
                 TimeUnit.SECONDS
         );
         log.debug("Refreshed online status for user {}", userId);
-        meterRegistry.counter("presence.status", "operation", "refresh", "status", "success").increment();
+        metricIncrement.incrementMetric("presence.set.online", "success");
     }
 
     @LoggableAction("Refresh Online Status Fallback")
-    public void refreshOnlineStatusFallback(UUID userId, Throwable t) {
+    void refreshOnlineStatusFallback(UUID userId, Throwable t) {
         log.warn("Failed to refresh online status for user {}: {}", userId, t.getMessage());
-        meterRegistry.counter("presence.status", "operation", "refresh", "status", "fallback").increment();
+        metricIncrement.incrementMetric("presence.set.online", "fallback");
     }
 
 
@@ -63,12 +64,13 @@ public class UserPresenceServiceImpl implements UserPresenceService {
     public void setOffline(UUID userId) {
         userPresenceRedisTemplate.delete(RedisKeys.userPresence(userId));
         log.debug("User {}, set offline", userId);
+        metricIncrement.incrementMetric("presence.set.offline", "success");
     }
 
     @LoggableAction("Set Offline Fallback")
-    public void setOfflineFallback(UUID userId, Throwable t) {
+    void setOfflineFallback(UUID userId, Throwable t) {
         log.warn("Failed to set user {} offline: {}", userId, t.getMessage());
-        meterRegistry.counter("presence.status", "operation", "offline", "status", "fallback").increment();
+        metricIncrement.incrementMetric("presence.set.offline", "fallback");
     }
 
 
@@ -79,14 +81,12 @@ public class UserPresenceServiceImpl implements UserPresenceService {
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "isOnlineFallback")
     public boolean isOnline(UUID userId) {
         boolean result = userPresenceRedisTemplate.hasKey(RedisKeys.userPresence(userId));
-        meterRegistry.counter("presence.status", "operation", "check", "status", result ? "online" : "offline").increment();
         return result;
     }
 
     @LoggableAction("Check Online Status Fallback")
-    public boolean isOnlineFallback(UUID userId, Throwable t) {
+    boolean isOnlineFallback(UUID userId, Throwable t) {
         log.warn("Failed to check online status for user {}: {}", userId, t.getMessage());
-        meterRegistry.counter("presence.status", "operation", "check", "status", "fallback").increment();
         return false;
     }
 }

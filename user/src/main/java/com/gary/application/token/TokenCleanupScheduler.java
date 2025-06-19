@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TokenCleanupScheduler {
 
-    private final TokenServiceImpl tokenService;
+    private final RefreshTokenServiceImpl tokenService;
 
     @Scheduled(fixedDelay = 86_400_000)
     public void cleanExpiredTokens() {

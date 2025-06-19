@@ -2,6 +2,7 @@ package com.gary.application.rateLimiter;
 
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
+import com.gary.application.common.MetricIncrement;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -25,6 +26,8 @@ public class RateLimiterServiceImpl implements RateLimiterService {
 
     private final RedisTemplate<String, String> rateLimiterRedisTemplate;
 
+    private final MetricIncrement metricIncrement;
+
     @Value("${message.limit}")
     private int messageLimit;
 
@@ -35,7 +38,6 @@ public class RateLimiterServiceImpl implements RateLimiterService {
         this.timeWindow = Duration.ofSeconds(seconds);
     }
 
-    private final MeterRegistry meterRegistry;
 
     private static final String LUA_SCRIPT =
             "local current\n" +
@@ -51,7 +53,7 @@ public class RateLimiterServiceImpl implements RateLimiterService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "rateLimiterFallback")
     @LoggableAction("Is Allowed To Send")
-    public RateLimiterStatus  isAllowedToSend(UUID userId) {
+    public RateLimiterStatus isAllowedToSend(UUID userId) {
 
         String key = RedisKeys.messageRateLimit(userId);
 
@@ -63,26 +65,25 @@ public class RateLimiterServiceImpl implements RateLimiterService {
 
         if (current == null) {
             log.warn("Redis returned null for rate limit key {}", key);
-            meterRegistry.counter("chat.message.rateLimiter", "status", "fallbackBlocked").increment();
+            metricIncrement.incrementMetric("rateLimiter.isAllowed","fallback");
             return RateLimiterStatus.UNAVAILABLE;
         }
 
         boolean allowed = current <= messageLimit;
 
         if (allowed) {
-            meterRegistry.counter("chat.message.rateLimiter", "status", "allowed").increment();
+            metricIncrement.incrementMetric("rateLimiter.isAllowed","allowed");
             return RateLimiterStatus.ALLOWED;
         } else {
-            meterRegistry.counter("chat.message.rateLimiter", "status", "rejected").increment();
+            metricIncrement.incrementMetric("rateLimiter.isAllowed","rejected");
             return RateLimiterStatus.BLOCKED;
         }
     }
 
-    @Override
     @LoggableAction("Rate Limiter Fallback")
-    public RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t) {
+    RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t) {
         log.error("Fallback triggered for userId {} due to {}", userId, t.toString());
-        meterRegistry.counter("chat.message.rateLimiter", "status", "fallbackBlocked").increment();
+        metricIncrement.incrementMetric("rateLimiter.isAllowed","fallback");
         return RateLimiterStatus.UNAVAILABLE;
     }
 }

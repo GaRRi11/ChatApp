@@ -11,10 +11,15 @@ import java.util.UUID;
 
 public interface UserService {
     Optional<User> getById(UUID id);
+
     UserResponse register(UserRequest userRequest);
+
     LoginResponseDto refreshToken(String token);
+
     LoginResponseDto login(UserRequest userRequest);
+
     void logout(User user);
+
     List<User> findAllById(List<UUID> userIds);
 
     List<UserResponse> searchByUsername(String username, UUID id);

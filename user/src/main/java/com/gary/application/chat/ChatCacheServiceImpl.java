@@ -1,5 +1,6 @@
 package com.gary.application.chat;
 
+import com.gary.application.common.MetricIncrement;
 import com.gary.application.common.ResultStatus;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.chat.ChatCacheService;
@@ -24,15 +25,15 @@ public class ChatCacheServiceImpl implements ChatCacheService {
 
     private final RedisTemplate<String, ChatMessageResponse> chatMessageRedisTemplate;
     private static final Duration MESSAGE_EXPIRATION = Duration.ofHours(6);
-    private final MeterRegistry meterRegistry;
+    private final MetricIncrement metricIncrement;
 
 
     @Override
     @LoggableAction("Cache Chat Message")
-    @Timed("chat.cache.cacheMessage.duration")
+    @Timed("chat.cache.save.duration")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "cacheMessageFallback")
-    public void cacheMessage(ChatMessageResponse message) {
+    public void save(ChatMessageResponse message) {
 
         String key = RedisKeys.chatMessages(message.senderId(), message.receiverId());
 
@@ -45,14 +46,13 @@ public class ChatCacheServiceImpl implements ChatCacheService {
             log.info("New Redis key created: {}. Expiration set to {} hours", key, MESSAGE_EXPIRATION.toHours());
         }
 
-        meterRegistry.counter("chat.message.cache", "status", "success").increment();
+        metricIncrement.incrementMetric("cache.chat.message.save","success");
     }
 
-    @Override
     @LoggableAction("Cache Chat Message Fallback")
-    public void cacheFallback(ChatMessageResponse response, Throwable t) {
+    void cacheFallback(ChatMessageResponse response, Throwable t) {
         log.warn("Failed to cache message id={} after retries/circuit breaker: {}", response.id(), t.getMessage());
-        meterRegistry.counter("chat.message.cache", "status", "fallback").increment();
+        metricIncrement.incrementMetric("cache.chat.message.save","fallback");
     }
 
 
@@ -72,12 +72,12 @@ public class ChatCacheServiceImpl implements ChatCacheService {
         if (messages == null || messages.isEmpty()) {
             log.info("No cached messages found for users [{} <-> {}] with offset={} and limit={}",
                     user1Id, user2Id, offset, limit);
-            meterRegistry.counter("chat.message.cache", "status", "miss").increment();
+            metricIncrement.incrementMetric("cache.chat.message.get","miss");
             status = ResultStatus.MISS;
         } else {
             log.info("Retrieved {} cached messages for users [{} <-> {}] with offset={} and limit={}",
                     messages.size(), user1Id, user2Id, offset, limit);
-            meterRegistry.counter("chat.message.cache", "status", "hit").increment();
+            metricIncrement.incrementMetric("cache.chat.message.get","hit");
             status = ResultStatus.HIT;
         }
 
@@ -88,11 +88,10 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     }
 
 
-    @Override
     @LoggableAction("Get Cached Messages Fallback")
-    public CachedMessagesResult getCachedMessagesFallback(UUID user1Id, UUID user2Id, int offset, int limit, Throwable t) {
+    CachedMessagesResult getCachedMessagesFallback(UUID user1Id, UUID user2Id, int offset, int limit, Throwable t) {
         log.warn("Failed to get cached messages for users [{} <-> {}]: {}", user1Id, user2Id, t.getMessage());
-        meterRegistry.counter("chat.message.cache", "status", "fallback").increment();
+        metricIncrement.incrementMetric("cache.chat.message.get","fallback");
 
 
         CachedMessagesResult result = CachedMessagesResult.builder()
@@ -122,12 +121,14 @@ public class ChatCacheServiceImpl implements ChatCacheService {
             log.warn("Attempted to evict chat cache for users [{} <-> {}], but key was not found (key={})",
                     user1Id, user2Id, key);
         }
+
+        metricIncrement.incrementMetric("cache.chat.message.clear","success");
+
     }
 
-    @Override
     @LoggableAction("Clear Cached Messages Fallback")
-    public void clearCachedMessagesFallback(UUID user1Id, UUID user2Id, Throwable t) {
+    void clearCachedMessagesFallback(UUID user1Id, UUID user2Id, Throwable t) {
         log.warn("Failed to clear cached messages for users [{} <-> {}]: {}", user1Id, user2Id, t.getMessage());
-        meterRegistry.counter("chat.message.cache", "status", "fallback_clear").increment();
+        metricIncrement.incrementMetric("cache.chat.message.clear","fallback");
     }
 }

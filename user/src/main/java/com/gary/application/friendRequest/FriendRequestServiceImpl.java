@@ -2,6 +2,7 @@ package com.gary.application.friendRequest;
 
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
+import com.gary.application.common.MetricIncrement;
 import com.gary.application.friendship.FriendshipManager;
 import com.gary.domain.model.friendrequest.FriendRequest;
 import com.gary.domain.model.friendrequest.RequestStatus;
@@ -19,12 +20,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import javax.naming.ServiceUnavailableException;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +34,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipManager friendshipManager;
-    private final MeterRegistry meterRegistry;
+    private final MetricIncrement metricIncrement;
 
     @Override
     @LoggableAction("Send Friend Request")
@@ -44,7 +42,6 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "sendRequestFallback")
     public FriendRequestResponse sendRequest(UUID senderId, UUID receiverId) {
-
 
         boolean exists = friendRequestRepository.existsBySenderIdAndReceiverIdAndStatusIn(
                 senderId,
@@ -70,15 +67,18 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         FriendRequestResponse response = FriendRequestResponse.fromEntity(saved);
 
-        meterRegistry.counter("friend.request.send", "status", "success").increment();
+        metricIncrement.incrementMetric("friend.request.send", "success");
 
         return response;
     }
 
 
-    public FriendRequestResponse sendRequestFallback(UUID senderId, UUID receiverId, Throwable t) {
+    FriendRequestResponse sendRequestFallback(UUID senderId, UUID receiverId, Throwable t) {
+
         log.warn("Failed to send friend request for {} to {}", senderId, receiverId);
-        meterRegistry.counter("friend.request.send", "status", "fallback").increment();
+
+        metricIncrement.incrementMetric("friend.request.send", "fallback");
+
         return FriendRequestResponse.builder()
                 .id(null)
                 .senderId(senderId)
@@ -120,12 +120,14 @@ public class FriendRequestServiceImpl implements FriendRequestService {
             log.info("Declined friend request between {} and {}", request.getSenderId(), request.getReceiverId());
         }
 
-        meterRegistry.counter("friend.request.respond", "status", "success").increment();
+
+        metricIncrement.incrementMetric("friend.request.respond", "success");
+
     }
 
-    public void respondToRequestFallback(RespondToFriendDto dto, UUID userId, Throwable t) {
+    void respondToRequestFallback(RespondToFriendDto dto, UUID userId, Throwable t) {
         log.warn("Failed to respond to friend request for {} to {}", userId, dto.requestId());
-        meterRegistry.counter("friend.request.respond", "status", "fallback").increment();
+        metricIncrement.incrementMetric("friend.request.respond", "fallback");
         throw new RespondToRequestServiceUnavailableException("Service temporarily unavailable. Please try again later.");
     }
 
@@ -133,17 +135,16 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getPendingRequestsFallback")
     public List<FriendRequestResponse> getPendingRequests(UUID userId) {
+
         log.debug("Fetching pending friend requests for userId={}", userId);
 
-        List<FriendRequestResponse> responses = friendRequestRepository
+        return friendRequestRepository
                 .findByReceiverIdAndStatus(userId, RequestStatus.PENDING).stream()
                 .map(FriendRequestResponse::fromEntity)
                 .toList();
-
-        return responses;
     }
 
-    public List<FriendRequestResponse> getPendingRequestsFallback(UUID userId, Throwable t) {
+    List<FriendRequestResponse> getPendingRequestsFallback(UUID userId, Throwable t) {
         log.warn("Fallback: Failed to fetch pending friend requests for userId={}", userId, t);
         return Collections.emptyList();
     }
@@ -152,17 +153,16 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getSentRequestsFallback")
     public List<FriendRequestResponse> getSentRequests(UUID userId) {
+
         log.debug("Fetching sent friend requests by userId={}", userId);
 
-        List<FriendRequestResponse> responses = friendRequestRepository
+        return friendRequestRepository
                 .findBySenderIdAndStatus(userId, RequestStatus.PENDING).stream()
                 .map(FriendRequestResponse::fromEntity)
                 .toList();
-
-        return responses;
     }
 
-    public List<FriendRequestResponse> getSentRequestsFallback(UUID userId, Throwable t) {
+    List<FriendRequestResponse> getSentRequestsFallback(UUID userId, Throwable t) {
         log.warn("Fallback: Failed to fetch sent friend requests for userId={}", userId, t);
         return Collections.emptyList();
     }

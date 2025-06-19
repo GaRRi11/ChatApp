@@ -2,6 +2,7 @@ package com.gary.application.friendship;
 
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
+import com.gary.application.common.ResultStatus;
 import com.gary.domain.model.friendship.Friendship;
 import com.gary.domain.model.user.User;
 import com.gary.domain.repository.friendship.FriendshipRepository;
@@ -49,22 +50,28 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
 
-    public List<UserResponse> getFriendsFallback(UUID userId, Throwable t) {
+    List<UserResponse> getFriendsFallback(UUID userId, Throwable t) {
         log.warn("Fallback triggered: Could not fetch friends for userId={}", userId, t);
-        return List.of(); // or return a cached version if available
+        return List.of();
     }
 
 
     @Override
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "areFriendsFallback")
-    public boolean areFriends(UUID senderId, UUID receiverId) {
-        return friendshipRepository.existsByUserIdAndFriendId(senderId, receiverId);
+    public ResultStatus areFriends(UUID senderId, UUID receiverId) {
+
+        if (friendshipRepository.existsByUserIdAndFriendId(senderId, receiverId)) {
+            return ResultStatus.HIT;
+        } else {
+            return ResultStatus.MISS;
+        }
+
     }
 
-    public boolean areFriendsFallback(UUID senderId, UUID receiverId, Throwable t) {
+    ResultStatus areFriendsFallback(UUID senderId, UUID receiverId, Throwable t) {
         log.warn("Fallback triggered: Could not check friendship between {} and {}", senderId, receiverId, t);
-        return false;
+        return ResultStatus.FALLBACK;
     }
 
     @Transactional

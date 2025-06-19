@@ -10,11 +10,8 @@ public interface ChatMessagePersistenceService {
 
     ChatMessage saveMessage(ChatMessage message);
 
-    ChatMessage dbSaveFallback(ChatMessage message, Throwable t);
 
     PersistedMessageResult findChatBetweenUsers(UUID user1Id, UUID user2Id, int offset, int limit);
-
-    PersistedMessageResult findChatFallback(UUID user1Id, UUID user2Id, int offset, int limit, Throwable t);
 
 
 }
