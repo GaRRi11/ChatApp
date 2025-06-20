@@ -49,12 +49,12 @@ public class UserServiceImpl implements UserService {
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "fallbackRegister")
     public UserResponse register(UserRequest userRequest) {
 
-        userRepository.findByUsername(userRequest.username()).ifPresent(u -> {
+        if (userRepository.findByUsername(userRequest.username()).isPresent()) {
             log.warn("Timestamp='{}' Registration failed: username '{}' already exists",
                     TimeFormat.nowTimestamp(),
                     userRequest.username());
             throw new DuplicateResourceException("Username already exists");
-        });
+        }
 
         User user = userRepository.save(User.builder()
                 .username(userRequest.username())
@@ -94,8 +94,7 @@ public class UserServiceImpl implements UserService {
                 TimeFormat.nowTimestamp(),
                 username,
                 requesterId,
-                e.toString(),
-                e);
+                e.toString());
 
         return Collections.emptyList();
     }
@@ -140,7 +139,7 @@ public class UserServiceImpl implements UserService {
 
     LoginResponseDto fallbackLogin(UserRequest userRequest, Throwable e) {
         metricIncrement.incrementMetric("user.login", "fallback");
-        log.error("Timestamp='{}' Login fallback triggered: {}", TimeFormat.nowTimestamp(), e.getMessage());
+        log.error("Timestamp='{}' Login fallback triggered: {}", TimeFormat.nowTimestamp(), e.toString());
         throw new LoginServiceUnavailableException("Login service temporarily unavailable. Try again later.");
     }
 
@@ -163,6 +162,8 @@ public class UserServiceImpl implements UserService {
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "fallbackRefreshToken")
     public LoginResponseDto refreshToken(String token) {
+
+        //new refresh token is not returned on purpose
 
         RefreshTokenResponse verifiedTokenResponse = tokenService.verify(token);
 
@@ -203,7 +204,7 @@ public class UserServiceImpl implements UserService {
     public Optional<User> getById(UUID id) {
         try {
             return userRepository.findById(id);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.warn("getById failed: {}", e.getMessage());
             throw new UserDataAccessException("Failed to get user by id: " + id, e);
         }
@@ -214,7 +215,7 @@ public class UserServiceImpl implements UserService {
     public List<User> findAllById(List<UUID> userIds) {
         try {
             return userRepository.findAllById(userIds);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.warn("findAllById failed: {}", e.getMessage());
             throw new UserDataAccessException("Failed to find users by ids", e);
         }

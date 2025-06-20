@@ -11,6 +11,7 @@ import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.friendship.FriendshipService;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.user.UserResponse;
+import com.gary.web.exception.FriendServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
@@ -53,13 +54,14 @@ public class FriendshipServiceImpl implements FriendshipService {
 
 
     List<UserResponse> getFriendsFallback(UUID userId, Throwable t) {
+
         log.warn("Timestamp='{}' Fallback triggered: Could not fetch friends for userId={}. Cause: {}",
                 TimeFormat.nowTimestamp(),
                 userId,
                 t.toString(),
                 t);
 
-        return List.of();
+        throw new FriendServiceUnavailableException("Failed to fetch friends for userId=" + userId);
     }
 
 
@@ -78,6 +80,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     ResultStatus areFriendsFallback(UUID senderId, UUID receiverId, Throwable t) {
+
         log.warn("Timestamp='{}' Fallback triggered: Could not check friendship between {} and {}. Cause: {}",
                 TimeFormat.nowTimestamp(),
                 senderId,
@@ -104,6 +107,8 @@ public class FriendshipServiceImpl implements FriendshipService {
                     friendId,
                     e,
                     e);
+
+            throw new FriendServiceUnavailableException("Failed to fetch friends for userId=" + userId);
         }
     }
 

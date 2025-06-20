@@ -32,7 +32,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @LoggableAction("Cache Chat Message")
     @Timed("chat.cache.save.duration")
     @Retry(name = "defaultRetry")
-    @CircuitBreaker(name = "defaultCB", fallbackMethod = "cacheMessageFallback")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "saveFallback")
     public void save(ChatMessageResponse message) {
 
         String key = RedisKeys.chatMessages(message.senderId(), message.receiverId());
@@ -43,13 +43,16 @@ public class ChatCacheServiceImpl implements ChatCacheService {
 
         if (isNewKey) {
             chatMessageRedisTemplate.expire(key, MESSAGE_EXPIRATION);
-            log.info("New Redis key created: {}. Expiration set to {} hours", key, MESSAGE_EXPIRATION.toHours());
+            log.info("Timestamp='{}' New Redis key created: {}. Expiration set to {} hours",
+                    TimeFormat.nowTimestamp(),
+                    key,
+                    MESSAGE_EXPIRATION.toHours());
         }
 
         metricIncrement.incrementMetric("cache.chat.message.save", "success");
     }
 
-    void cacheFallback(ChatMessageResponse response, Throwable t) {
+    void saveFallback(ChatMessageResponse response, Throwable t) {
 
         log.warn("Timestamp='{}' Cache save failed permanently. Message id={}, senderId={}, receiverId={}, content='{}'. Cause: {}",
                 TimeFormat.nowTimestamp(),

@@ -7,7 +7,7 @@ import com.gary.application.common.ResultStatus;
 import com.gary.application.common.TimeFormat;
 import com.gary.domain.model.chatmessage.ChatMessage;
 import com.gary.domain.repository.chatMessage.ChatMessageRepository;
-import com.gary.domain.service.chat.ChatMessagePersistenceService;
+import com.gary.domain.service.chat.ChatPersistenceService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ChatPersistenceServiceImpl implements ChatMessagePersistenceService {
+public class ChatPersistenceServiceImpl implements ChatPersistenceService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final MetricIncrement metricIncrement;
@@ -74,8 +74,7 @@ public class ChatPersistenceServiceImpl implements ChatMessagePersistenceService
                 user2Id,
                 offset,
                 limit,
-                t.toString(),
-                t);
+                t.toString());
 
         metricIncrement.incrementMetric("db.chat.message.find","fallback");
 

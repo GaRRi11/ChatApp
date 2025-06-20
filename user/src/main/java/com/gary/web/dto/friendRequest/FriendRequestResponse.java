@@ -14,9 +14,18 @@ public record FriendRequestResponse(
         UUID receiverId,
         RequestStatus status,
         LocalDateTime createdAt,
-        LocalDateTime respondedAt
-
+        LocalDateTime respondedAt,
+        boolean fallback
 ) {
+    public FriendRequestResponse(UUID id,
+                                 UUID senderId,
+                                 UUID receiverId,
+                                 RequestStatus status,
+                                 LocalDateTime createdAt,
+                                 LocalDateTime respondedAt) {
+        this(id, senderId, receiverId, status, createdAt, respondedAt, false);
+    }
+
     public static FriendRequestResponse fromEntity(FriendRequest entity) {
         return new FriendRequestResponse(
                 entity.getId(),

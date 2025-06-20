@@ -9,10 +9,7 @@ import com.gary.domain.model.friendrequest.FriendRequest;
 import com.gary.domain.model.friendrequest.RequestStatus;
 import com.gary.domain.repository.friendRequest.FriendRequestRepository;
 import com.gary.domain.service.friendRequest.FriendRequestService;
-import com.gary.web.exception.DuplicateResourceException;
-import com.gary.web.exception.FriendRequestNotFoundException;
-import com.gary.web.exception.RespondToRequestServiceUnavailableException;
-import com.gary.web.exception.UnauthorizedException;
+import com.gary.web.exception.*;
 import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.friendRequest.FriendRequestResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -23,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +33,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     private final MetricIncrement metricIncrement;
 
     @Override
+    @Transactional
     @LoggableAction("Send Friend Request")
     @Timed("friendRequest.send.duration")
     @Retry(name = "defaultRetry")
@@ -80,13 +77,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         metricIncrement.incrementMetric("friend.request.send", "fallback");
 
-        return FriendRequestResponse.builder()
-                .id(null)
-                .senderId(senderId)
-                .receiverId(receiverId)
-                .status(RequestStatus.FAILED)
-                .createdAt(null)
-                .build();
+        throw new SendFriendRequestServiceUnavailableException("Service temporarily unavailable. Please try again later.");
     }
 
     @Transactional
@@ -113,7 +104,6 @@ public class FriendRequestServiceImpl implements FriendRequestService {
             throw new UnauthorizedException("You are not authorized to respond to this friend request");
         }
 
-
         RequestStatus newStatus = dto.accept() ? RequestStatus.ACCEPTED : RequestStatus.DECLINED;
         request.setStatus(newStatus);
         request.setRespondedAt(LocalDateTime.now());
@@ -134,8 +124,8 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
 
         metricIncrement.incrementMetric("friend.request.respond", "success");
-
     }
+
 
     void respondToRequestFallback(RespondToFriendDto dto, UUID userId, Throwable t) {
         log.warn("Timestamp='{}' Failed to respond to friend request from user {} to requestId={}. Cause: {}",
@@ -168,7 +158,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                 userId,
                 t.toString());
 
-        return Collections.emptyList();
+        throw new GetFriendRequestsServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
     }
 
     @Override
@@ -188,7 +178,8 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                 TimeFormat.nowTimestamp(),
                 userId,
                 t.toString());
-        return Collections.emptyList();
+
+        throw new GetFriendRequestsServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
     }
 
 

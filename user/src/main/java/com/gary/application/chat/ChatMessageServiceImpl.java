@@ -6,6 +6,7 @@ import com.gary.application.rateLimiter.RateLimiterStatus;
 import com.gary.domain.model.chatmessage.ChatMessage;
 import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.chat.ChatMessageService;
+import com.gary.domain.service.chat.ChatPersistenceService;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
 import com.gary.web.exception.MessagePersistenceException;
 import com.gary.web.exception.RateLimiterServiceUnavailableException;
@@ -30,7 +31,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
     private final RateLimiterService rateLimiterService;
     private final ChatCacheService chatCacheService;
-    private final ChatPersistenceServiceImpl chatPersistenceService;
+    private final ChatPersistenceService chatPersistenceService;
 
 
     @Override

@@ -37,7 +37,7 @@ public class UserPresenceServiceImpl implements UserPresenceService {
     @LoggableAction("Refresh Online Status")
     @Timed("presence.RefreshOnline.duration")
     @Retry(name = "defaultRetry")
-    @CircuitBreaker(name = "defaultCB", fallbackMethod = "getCachedMessagesFallback")
+    @CircuitBreaker(name = "defaultCB", fallbackMethod = "refreshOnlineStatusFallback")
     public void refreshOnlineStatus(UUID userId) {
         userPresenceRedisTemplate.opsForValue().set(
                 RedisKeys.userPresence(userId),

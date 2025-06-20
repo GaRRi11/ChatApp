@@ -128,11 +128,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void clearExpiredTokens() {
         long now = Instant.now().toEpochMilli();
         try {
-            refreshTokenRepository.findAll().stream()
-                    .filter(token -> token.getExpiryDate() < now)
-                    .forEach(token -> refreshTokenRepository.deleteById(token.getId()));
+            refreshTokenRepository.deleteExpiredTokens(Instant.now().toEpochMilli());
             metricIncrement.incrementMetric("refresh.token.delete.expired","success");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.warn("Timestamp='{}' Failed to delete expired tokens. Cause: {}",
                     TimeFormat.nowTimestamp(),
                     e.toString());

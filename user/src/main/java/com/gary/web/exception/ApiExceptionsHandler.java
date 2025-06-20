@@ -23,6 +23,25 @@ public class ApiExceptionsHandler {
     }
 
 
+    @ExceptionHandler(FriendServiceUnavailableException.class)
+    public ResponseEntity<String> handleFriendServiceUnavailableException(FriendServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+    @ExceptionHandler(GetFriendRequestsServiceUnavailableException.class)
+    public ResponseEntity<String> handleGetFriendRequestsServiceUnavailableException(GetFriendRequestsServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+
+    @ExceptionHandler(SendFriendRequestServiceUnavailableException.class)
+    public ResponseEntity<String> handleSendFriendRequestServiceUnavailableException(SendFriendRequestServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
     @ExceptionHandler(UserDataAccessException.class)
     public ResponseEntity<String> handleUserDataAccessException(UserDataAccessException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
