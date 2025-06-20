@@ -17,7 +17,6 @@ import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.friendRequest.FriendRequestResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

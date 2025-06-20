@@ -3,6 +3,7 @@ package com.gary.application.friendship;
 import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
 import com.gary.application.common.ResultStatus;
+import com.gary.application.common.TimeFormat;
 import com.gary.domain.model.friendship.Friendship;
 import com.gary.domain.model.user.User;
 import com.gary.domain.repository.friendship.FriendshipRepository;
@@ -15,7 +16,6 @@ import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,10 +34,12 @@ public class FriendshipServiceImpl implements FriendshipService {
 
 
     @Override
+    @LoggableAction("Get Friends")
     @Timed("friendship.get.duration")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getFriendsFallback")
     public List<UserResponse> getFriends(UUID userId) {
+
         List<UUID> friendIds = friendshipRepository.findByUserId(userId).stream()
                 .map(Friendship::getFriendId)
                 .collect(Collectors.toList());
@@ -51,12 +53,18 @@ public class FriendshipServiceImpl implements FriendshipService {
 
 
     List<UserResponse> getFriendsFallback(UUID userId, Throwable t) {
-        log.warn("Fallback triggered: Could not fetch friends for userId={}", userId, t);
+        log.warn("Timestamp='{}' Fallback triggered: Could not fetch friends for userId={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                userId,
+                t.toString(),
+                t);
+
         return List.of();
     }
 
 
     @Override
+    @LoggableAction("Are Friends Check")
     @Retry(name = "defaultRetry")
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "areFriendsFallback")
     public ResultStatus areFriends(UUID senderId, UUID receiverId) {
@@ -70,21 +78,32 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     ResultStatus areFriendsFallback(UUID senderId, UUID receiverId, Throwable t) {
-        log.warn("Fallback triggered: Could not check friendship between {} and {}", senderId, receiverId, t);
+        log.warn("Timestamp='{}' Fallback triggered: Could not check friendship between {} and {}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                senderId,
+                receiverId,
+                t.toString(),
+                t);
+
         return ResultStatus.FALLBACK;
     }
 
     @Transactional
     @Override
+    @LoggableAction("Remove Friends")
     public void removeFriend(UUID userId, UUID friendId) {
         try {
             friendshipManager.deleteBidirectional(userId, friendId);
 
             chatCacheService.clearCachedMessages(userId, friendId);
 
-            log.info("Removed friendship and evicted cache for userId={} and friendId={}", userId, friendId);
         } catch (RuntimeException e) {
-            log.error("Failed to remove friendship between userId={} and friendId={}", userId, friendId, e);
+            log.error("Timestamp='{}' Failed to remove friendship between userId={} and friendId={}. Cause: {}",
+                    TimeFormat.nowTimestamp(),
+                    userId,
+                    friendId,
+                    e,
+                    e);
         }
     }
 

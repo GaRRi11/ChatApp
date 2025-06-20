@@ -22,6 +22,39 @@ public class ApiExceptionsHandler {
         return new ResponseEntity<>(apiException, status);
     }
 
+
+    @ExceptionHandler(UserDataAccessException.class)
+    public ResponseEntity<String> handleUserDataAccessException(UserDataAccessException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+    @ExceptionHandler(LogoutFailedException.class)
+    public ResponseEntity<String> handleLogoutFailedException(LogoutFailedException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+    @ExceptionHandler(LoginServiceUnavailableException.class)
+    public ResponseEntity<String> handleLoginServiceUnavailableException(LoginServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+
+    @ExceptionHandler(TokenCreationException.class)
+    public ResponseEntity<String> handleTokenCreationException(TokenCreationException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+    @ExceptionHandler(RegistrationServiceUnavailableException.class)
+    public ResponseEntity<String> handleRegistrationServiceUnavailableException(RegistrationServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Server is temporarily unable to process your request. Please try again later.");
+    }
+
+
     @ExceptionHandler(RespondToRequestServiceUnavailableException.class)
     public ResponseEntity<String> handleRespondToRequestServiceUnavailableException(RespondToRequestServiceUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)

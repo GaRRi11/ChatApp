@@ -4,12 +4,12 @@ import com.gary.annotations.LoggableAction;
 import com.gary.annotations.Timed;
 import com.gary.application.common.MetricIncrement;
 import com.gary.application.common.ResultStatus;
+import com.gary.application.common.TimeFormat;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.domain.repository.token.RefreshTokenRepository;
 import com.gary.domain.service.refreshToken.RefreshTokenService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     RefreshToken createFallback(UUID userId, Throwable t) {
-        log.warn("Failed to create refresh token for {} due to {}", userId, t.getMessage());
+        log.warn("Timestamp='{}' Failed to create refresh token for userId={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                userId,
+                t.toString());
         metricIncrement.incrementMetric("refresh.token.save","fallback");
         return null;
     }
@@ -65,6 +68,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
 
         if (refreshToken.isRevoked() || refreshToken.getExpiryDate() < Instant.now().toEpochMilli()) {
+            log.warn("Timestamp='{}' Refresh token '{}' is revoked or expired. Returning MISS status.",
+                    TimeFormat.nowTimestamp(),
+                    token);
+
             return RefreshTokenResponse.builder()
                     .refreshToken(null)
                     .resultStatus(ResultStatus.MISS)
@@ -80,8 +87,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     RefreshTokenResponse verifyFallback(String token, Throwable t) {
-        log.warn("Failed to verify refresh token for {} to {}", token, t);
+        log.warn("Timestamp='{}' Failed to verify refresh token '{}'. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                token,
+                t.toString());
+
         metricIncrement.incrementMetric("refresh.token.verify","fallback");
+
         return RefreshTokenResponse.builder()
                 .refreshToken(null)
                 .resultStatus(ResultStatus.FALLBACK)
@@ -101,7 +113,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     boolean deleteByUserFallback(UUID userId, Throwable t) {
-        log.warn("Failed to delete refresh token for {} to {}", userId, t);
+        log.warn("Timestamp='{}' Failed to delete refresh token for userId={}. Cause: {}",
+                TimeFormat.nowTimestamp(),
+                userId,
+                t.toString());
         metricIncrement.incrementMetric("refresh.token.delete","fallback");
         return false;
     }
@@ -118,7 +133,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                     .forEach(token -> refreshTokenRepository.deleteById(token.getId()));
             metricIncrement.incrementMetric("refresh.token.delete.expired","success");
         } catch (Exception e) {
-            log.warn("Failed to delete expired tokens: {}", e.getMessage());
+            log.warn("Timestamp='{}' Failed to delete expired tokens. Cause: {}",
+                    TimeFormat.nowTimestamp(),
+                    e.toString());
             metricIncrement.incrementMetric("refresh.token.delete.expired","fallback");
         }
     }

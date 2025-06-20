@@ -8,7 +8,6 @@ import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,7 +64,7 @@ public class RateLimiterServiceImpl implements RateLimiterService {
         );
 
         if (current == null) {
-            log.warn("Redis returned null for rate limit key {}", key);
+            log.warn("Timestamp='{}' Redis returned null for rate limit key {}", TimeFormat.nowTimestamp(), key);
             metricIncrement.incrementMetric("rateLimiter.isAllowed", "fallback");
             return RateLimiterStatus.UNAVAILABLE;
         }
@@ -86,7 +85,7 @@ public class RateLimiterServiceImpl implements RateLimiterService {
     @LoggableAction("Rate Limiter Fallback")
     RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t) {
         log.error("Timestamp='{}' Fallback triggered for userId {} due to: {}",
-                TimeFormat.nowTimestamp(), userId, t.toString(), t);
+                TimeFormat.nowTimestamp(), userId, t.toString());
         metricIncrement.incrementMetric("rateLimiter.isAllowed", "fallback");
         return RateLimiterStatus.UNAVAILABLE;
     }

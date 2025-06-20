@@ -10,13 +10,10 @@ import com.gary.domain.repository.chatMessage.ChatMessageRepository;
 import com.gary.domain.service.chat.ChatMessagePersistenceService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,10 +68,12 @@ public class ChatPersistenceServiceImpl implements ChatMessagePersistenceService
 
     PersistedMessageResult findChatFallback(UUID user1Id, UUID user2Id, int offset, int limit, Throwable t) {
 
-        log.error("Timestamp='{}' DB find operation failed permanently for users [{} <-> {}]. Cause: {}",
+        log.error("Timestamp='{}' DB find operation failed permanently for users [{} <-> {}] with offset={} and limit={}. Cause: {}",
                 TimeFormat.nowTimestamp(),
                 user1Id,
                 user2Id,
+                offset,
+                limit,
                 t.toString(),
                 t);
 
