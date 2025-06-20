@@ -8,8 +8,7 @@ import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.chat.ChatMessageService;
 import com.gary.domain.service.chat.ChatPersistenceService;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
-import com.gary.web.exception.MessagePersistenceException;
-import com.gary.web.exception.RateLimiterServiceUnavailableException;
+import com.gary.web.exception.ServiceUnavailableException;
 import com.gary.web.exception.TooManyRequestsException;
 import com.gary.web.dto.chatMessage.ChatMessageRequest;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
@@ -48,7 +47,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 ChatMessage savedMessage = chatPersistenceService.saveMessage(message);
 
                 if (savedMessage == null) {
-                    throw new MessagePersistenceException("Message service is temporarily unavailable. Please try again later.");
+                    throw new ServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
                 }
 
                 ChatMessageResponse response = ChatMessageResponse.fromEntity(savedMessage);
@@ -62,7 +61,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             case UNAVAILABLE:
             default:
 
-                throw new RateLimiterServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
+                throw new ServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
         }
     }
 
@@ -81,7 +80,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         PersistedMessageResult persistedResult = chatPersistenceService.findChatBetweenUsers(user1Id, user2Id, offset, limit);
 
         if (persistedResult.status() == ResultStatus.FALLBACK) {
-            throw new MessagePersistenceException("Message service is temporarily unavailable. Please try again later.");
+            throw new ServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
         }
 
         List<ChatMessageResponse> responses = persistedResult.messages().stream()

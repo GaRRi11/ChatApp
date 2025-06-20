@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService {
                 TimeFormat.nowTimestamp(),
                 e.toString());
 
-        throw new RegistrationServiceUnavailableException("Registration service temporarily unavailable. Try again later.");
+        throw new ServiceUnavailableException("Registration service temporarily unavailable. Try again later.");
     }
 
     @Override
@@ -126,7 +126,7 @@ public class UserServiceImpl implements UserService {
         String refreshToken = tokenService.create(user.getId()).getToken();
 
         if (refreshToken == null) {
-            throw new TokenCreationException("Failed to create refresh token. Please try again later.");
+            throw new ServiceUnavailableException("Failed to create refresh token. Please try again later.");
         }
 
         metricIncrement.incrementMetric("user.login", "success");
@@ -140,7 +140,7 @@ public class UserServiceImpl implements UserService {
     LoginResponseDto fallbackLogin(UserRequest userRequest, Throwable e) {
         metricIncrement.incrementMetric("user.login", "fallback");
         log.error("Timestamp='{}' Login fallback triggered: {}", TimeFormat.nowTimestamp(), e.toString());
-        throw new LoginServiceUnavailableException("Login service temporarily unavailable. Try again later.");
+        throw new ServiceUnavailableException("Login service temporarily unavailable. Try again later.");
     }
 
     @Override
@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
         boolean success = tokenService.deleteByUser(user.getId());
 
         if (!success) {
-            throw new LogoutFailedException("Failed to log out. Please try again later.");
+            throw new ServiceUnavailableException("Failed to log out. Please try again later.");
         }
 
         return true;
@@ -168,7 +168,7 @@ public class UserServiceImpl implements UserService {
         RefreshTokenResponse verifiedTokenResponse = tokenService.verify(token);
 
         if (verifiedTokenResponse.resultStatus() == ResultStatus.FALLBACK) {
-            throw new TokenVerificationException("Failed to verify token");
+            throw new ServiceUnavailableException("Token refresh service temporarily unavailable.");
         }
 
 
@@ -196,7 +196,7 @@ public class UserServiceImpl implements UserService {
 
     LoginResponseDto fallbackRefreshToken(String token, Throwable e) {
         log.error("Timestamp='{}' Refresh fallback triggered: {}", TimeFormat.nowTimestamp(), e.toString());
-        throw new TokenVerificationException("Token refresh service temporarily unavailable.");
+        throw new ServiceUnavailableException("Token refresh service temporarily unavailable.");
     }
 
     @Override
@@ -206,7 +206,7 @@ public class UserServiceImpl implements UserService {
             return userRepository.findById(id);
         } catch (RuntimeException e) {
             log.warn("getById failed: {}", e.getMessage());
-            throw new UserDataAccessException("Failed to get user by id: " + id, e);
+            throw new ServiceUnavailableException("Failed to get user by id: " + id);
         }
     }
 
@@ -217,7 +217,7 @@ public class UserServiceImpl implements UserService {
             return userRepository.findAllById(userIds);
         } catch (RuntimeException e) {
             log.warn("findAllById failed: {}", e.getMessage());
-            throw new UserDataAccessException("Failed to find users by ids", e);
+            throw new ServiceUnavailableException("Failed to find users by ids");
         }
     }
 

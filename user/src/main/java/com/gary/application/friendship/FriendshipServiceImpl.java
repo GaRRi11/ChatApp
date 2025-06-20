@@ -11,7 +11,7 @@ import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.friendship.FriendshipService;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.user.UserResponse;
-import com.gary.web.exception.FriendServiceUnavailableException;
+import com.gary.web.exception.ServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
@@ -61,7 +61,7 @@ public class FriendshipServiceImpl implements FriendshipService {
                 t.toString(),
                 t);
 
-        throw new FriendServiceUnavailableException("Failed to fetch friends for userId=" + userId);
+        throw new ServiceUnavailableException("Failed to fetch friends for userId=" + userId);
     }
 
 
@@ -108,7 +108,7 @@ public class FriendshipServiceImpl implements FriendshipService {
                     e,
                     e);
 
-            throw new FriendServiceUnavailableException("Failed to fetch friends for userId=" + userId);
+            throw new ServiceUnavailableException("Failed to fetch friends for userId=" + userId);
         }
     }
 

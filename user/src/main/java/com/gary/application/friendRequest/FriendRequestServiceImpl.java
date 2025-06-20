@@ -77,7 +77,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         metricIncrement.incrementMetric("friend.request.send", "fallback");
 
-        throw new SendFriendRequestServiceUnavailableException("Service temporarily unavailable. Please try again later.");
+        throw new ServiceUnavailableException("Service temporarily unavailable. Please try again later.");
     }
 
     @Transactional
@@ -93,7 +93,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                     log.warn("Timestamp='{}' Friend request not found for requestId={}.",
                             TimeFormat.nowTimestamp(),
                             dto.requestId());
-                    return new FriendRequestNotFoundException(dto.requestId());
+                    return new ResourceNotFoundException("Friend Request By Id:" + dto.requestId() + "Does not exist");
                 });
 
         if (!request.getReceiverId().equals(userId)) {
@@ -136,7 +136,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         metricIncrement.incrementMetric("friend.request.respond", "fallback");
 
-        throw new RespondToRequestServiceUnavailableException("Service temporarily unavailable. Please try again later.");
+        throw new ServiceUnavailableException("Service temporarily unavailable. Please try again later.");
     }
 
     @Override
@@ -158,7 +158,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                 userId,
                 t.toString());
 
-        throw new GetFriendRequestsServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
+        throw new ServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
     }
 
     @Override
@@ -179,7 +179,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                 userId,
                 t.toString());
 
-        throw new GetFriendRequestsServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
+        throw new ServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
     }
 
 

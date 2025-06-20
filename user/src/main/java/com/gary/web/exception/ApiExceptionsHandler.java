@@ -23,76 +23,15 @@ public class ApiExceptionsHandler {
     }
 
 
-    @ExceptionHandler(FriendServiceUnavailableException.class)
-    public ResponseEntity<String> handleFriendServiceUnavailableException(FriendServiceUnavailableException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Object> handleResourceNotFoundException(ResourceNotFoundException e) {
+        return buildResponse(e, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(GetFriendRequestsServiceUnavailableException.class)
-    public ResponseEntity<String> handleGetFriendRequestsServiceUnavailableException(GetFriendRequestsServiceUnavailableException ex) {
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<String> handleServiceUnavailableException(ServiceUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-
-    @ExceptionHandler(SendFriendRequestServiceUnavailableException.class)
-    public ResponseEntity<String> handleSendFriendRequestServiceUnavailableException(SendFriendRequestServiceUnavailableException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-    @ExceptionHandler(UserDataAccessException.class)
-    public ResponseEntity<String> handleUserDataAccessException(UserDataAccessException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-    @ExceptionHandler(LogoutFailedException.class)
-    public ResponseEntity<String> handleLogoutFailedException(LogoutFailedException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-    @ExceptionHandler(LoginServiceUnavailableException.class)
-    public ResponseEntity<String> handleLoginServiceUnavailableException(LoginServiceUnavailableException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-
-    @ExceptionHandler(TokenCreationException.class)
-    public ResponseEntity<String> handleTokenCreationException(TokenCreationException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-    @ExceptionHandler(RegistrationServiceUnavailableException.class)
-    public ResponseEntity<String> handleRegistrationServiceUnavailableException(RegistrationServiceUnavailableException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-
-    @ExceptionHandler(RespondToRequestServiceUnavailableException.class)
-    public ResponseEntity<String> handleRespondToRequestServiceUnavailableException(RespondToRequestServiceUnavailableException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-
-
-    @ExceptionHandler(MessagePersistenceException.class)
-    public ResponseEntity<String> handleMessagePersistenceException(MessagePersistenceException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
-    }
-
-
-    @ExceptionHandler(RateLimiterServiceUnavailableException.class)
-    public ResponseEntity<String> handleRateLimiterUnavailable(RateLimiterServiceUnavailableException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Server is temporarily unable to process your request. Please try again later.");
+                .body(ex.getMessage());
     }
 
 
@@ -103,26 +42,6 @@ public class ApiExceptionsHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-
-    @ExceptionHandler(FriendshipAlreadyExistsException.class)
-    public ResponseEntity<Object> handleFriendshipAlreadyExists(FriendshipAlreadyExistsException e) {
-        return buildResponse(e, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(FriendshipDoesnotExistException.class)
-    public ResponseEntity<Object> handleFriendshipDoesNotExist(FriendshipDoesnotExistException e) {
-        return buildResponse(e, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(UserDoesnotExistException.class)
-    public ResponseEntity<Object> handleUserDoesNotExist(UserDoesnotExistException e) {
-        return buildResponse(e, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(FriendRequestNotFoundException.class)
-    public ResponseEntity<Object> handleFriendRequestNotFound(FriendRequestNotFoundException e) {
-        return buildResponse(e, HttpStatus.NOT_FOUND);
-    }
 
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException e) {

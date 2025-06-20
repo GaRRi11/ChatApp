@@ -4,9 +4,9 @@ import com.gary.application.common.ResultStatus;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendRequest.FriendRequestService;
 import com.gary.domain.service.friendship.FriendshipService;
-import com.gary.web.exception.FriendshipAlreadyExistsException;
 import com.gary.web.dto.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.friendRequest.FriendRequestResponse;
+import com.gary.web.exception.DuplicateResourceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +46,7 @@ public class FriendRequestController {
 
         if (friendshipService.areFriends(senderId, receiverId) ==  ResultStatus.HIT) {
             log.warn("Users {} and {} are already friends", senderId, receiverId);
-            throw new FriendshipAlreadyExistsException(senderId, receiverId);
+            throw new DuplicateResourceException("Friendship between user:" + senderId + "and " + receiverId + "already exists");
         }
 
         FriendRequestResponse sentRequest = friendRequestService.sendRequest(senderId, receiverId);
