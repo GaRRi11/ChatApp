@@ -1,6 +1,6 @@
 package com.gary.application.chat;
 
-import com.gary.application.common.ResultStatus;
+import com.gary.common.ResultStatus;
 import com.gary.web.dto.chatMessage.ChatMessageResponse;
 import lombok.Builder;
 

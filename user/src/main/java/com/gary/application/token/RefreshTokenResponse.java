@@ -1,6 +1,6 @@
 package com.gary.application.token;
 
-import com.gary.application.common.ResultStatus;
+import com.gary.common.ResultStatus;
 import com.gary.domain.model.token.RefreshToken;
 import lombok.Builder;
 

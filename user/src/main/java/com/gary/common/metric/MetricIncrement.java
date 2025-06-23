@@ -1,4 +1,4 @@
-package com.gary.application.common;
+package com.gary.common.metric;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;

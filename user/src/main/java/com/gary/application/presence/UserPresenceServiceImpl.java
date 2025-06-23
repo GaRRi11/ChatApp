@@ -1,9 +1,9 @@
 package com.gary.application.presence;
 
-import com.gary.annotations.LoggableAction;
-import com.gary.annotations.Timed;
-import com.gary.application.common.MetricIncrement;
-import com.gary.application.common.TimeFormat;
+import com.gary.common.annotations.LoggableAction;
+import com.gary.common.annotations.Timed;
+import com.gary.common.metric.MetricIncrement;
+import com.gary.common.time.TimeFormat;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.presence.UserPresenceService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

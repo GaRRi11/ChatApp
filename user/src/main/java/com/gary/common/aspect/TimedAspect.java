@@ -1,6 +1,6 @@
-package com.gary.aspect;
+package com.gary.common.aspect;
 
-import com.gary.annotations.Timed;
+import com.gary.common.annotations.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;

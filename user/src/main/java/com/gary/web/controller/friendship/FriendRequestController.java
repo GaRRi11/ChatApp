@@ -1,6 +1,6 @@
 package com.gary.web.controller.friendship;
 
-import com.gary.application.common.ResultStatus;
+import com.gary.common.ResultStatus;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendRequest.FriendRequestService;
 import com.gary.domain.service.friendship.FriendshipService;
@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.List;
 import java.util.UUID;

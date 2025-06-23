@@ -1,6 +1,6 @@
-package com.gary.aspect;
+package com.gary.common.aspect;
 
-import com.gary.annotations.LoggableAction;
+import com.gary.common.annotations.LoggableAction;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

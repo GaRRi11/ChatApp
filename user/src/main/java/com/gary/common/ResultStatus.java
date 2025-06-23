@@ -1,4 +1,4 @@
-package com.gary.application.common;
+package com.gary.common;
 
 public enum ResultStatus {
     HIT,

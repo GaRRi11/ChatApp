@@ -1,10 +1,10 @@
 package com.gary.application.user;
 
-import com.gary.annotations.LoggableAction;
-import com.gary.annotations.Timed;
-import com.gary.application.common.MetricIncrement;
-import com.gary.application.common.ResultStatus;
-import com.gary.application.common.TimeFormat;
+import com.gary.common.annotations.LoggableAction;
+import com.gary.common.annotations.Timed;
+import com.gary.common.metric.MetricIncrement;
+import com.gary.common.ResultStatus;
+import com.gary.common.time.TimeFormat;
 import com.gary.application.token.RefreshTokenResponse;
 import com.gary.application.token.RefreshTokenServiceImpl;
 import com.gary.domain.model.user.User;

@@ -1,4 +1,4 @@
-package com.gary.application.common;
+package com.gary.common.time;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
