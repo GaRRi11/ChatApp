@@ -2,7 +2,7 @@ package com.gary.web.controller.friendship;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendship.FriendshipService;
-import com.gary.web.dto.user.UserResponse;
+import com.gary.web.dto.rest.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +25,6 @@ public class FriendshipController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<UserResponse>> getFriends(@AuthenticationPrincipal User authenticatedUser) {
         UUID userId = authenticatedUser.getId();
-
-        log.debug("Fetching friends for userId={}", userId);
         List<UserResponse> friends = friendshipService.getFriends(userId);
         return ResponseEntity.ok(friends);
     }
@@ -42,7 +40,6 @@ public class FriendshipController {
             return ResponseEntity.badRequest().build();
         }
 
-        log.debug("User {} removing friend {}", userId, friendId);
         friendshipService.removeFriend(userId, friendId);
         return ResponseEntity.noContent().build();
     }

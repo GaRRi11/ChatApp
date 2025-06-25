@@ -4,8 +4,10 @@ import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
 import com.gary.common.metric.MetricIncrement;
 import com.gary.common.time.TimeFormat;
+import com.gary.domain.repository.cache.rateLimiter.RateLimiterCacheRepository;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
+import com.gary.web.dto.cache.rateLimiter.RateLimiterCacheDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +26,9 @@ import java.util.UUID;
 @Slf4j
 public class RateLimiterServiceImpl implements RateLimiterService {
 
-    private final RedisTemplate<String, String> rateLimiterRedisTemplate;
-
     private final MetricIncrement metricIncrement;
+
+    private final RateLimiterCacheRepository  rateLimiterCacheRepository;
 
     @Value("${message.limit}")
     private int messageLimit;
@@ -55,34 +57,30 @@ public class RateLimiterServiceImpl implements RateLimiterService {
     @LoggableAction("Is Allowed To Send")
     public RateLimiterStatus isAllowedToSend(UUID userId) {
 
-        String key = RedisKeys.messageRateLimit(userId);
 
-        Long current = rateLimiterRedisTemplate.execute(
-                new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
-                Collections.singletonList(key),
-                String.valueOf(timeWindow.getSeconds())
+        RateLimiterCacheDto dto = rateLimiterCacheRepository.findById(userId).orElseGet(() ->
+                RateLimiterCacheDto.builder()
+                        .userId(userId)
+                        .count(0)
+                        .expiration(timeWindow.getSeconds())
+                        .build()
         );
 
-        if (current == null) {
-            log.warn("Timestamp='{}' Redis returned null for rate limit key {}", TimeFormat.nowTimestamp(), key);
-            metricIncrement.incrementMetric("rateLimiter.isAllowed", "fallback");
-            return RateLimiterStatus.UNAVAILABLE;
-        }
+        dto.increment();
+        rateLimiterCacheRepository.save(dto);
 
-        boolean allowed = current <= messageLimit;
-
-        if (allowed) {
+        if (dto.getCount() <= messageLimit) {
             metricIncrement.incrementMetric("rateLimiter.isAllowed", "allowed");
             return RateLimiterStatus.ALLOWED;
         } else {
-            log.warn("Timestamp='{}' User {} is blocked by rate limiter due to sending messages too quickly.",
-                    TimeFormat.nowTimestamp(), userId);
+            log.warn("Timestamp='{}' User {} exceeded rate limit. Count: {}",
+                    TimeFormat.nowTimestamp(), userId, dto.getCount());
             metricIncrement.incrementMetric("rateLimiter.isAllowed", "rejected");
             return RateLimiterStatus.BLOCKED;
         }
+
     }
 
-    @LoggableAction("Rate Limiter Fallback")
     RateLimiterStatus rateLimiterFallback(UUID userId, Throwable t) {
         log.error("Timestamp='{}' Fallback triggered for userId {} due to: {}",
                 TimeFormat.nowTimestamp(), userId, t.toString());

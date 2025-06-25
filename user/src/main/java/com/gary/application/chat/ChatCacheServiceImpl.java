@@ -5,19 +5,17 @@ import com.gary.common.ResultStatus;
 import com.gary.common.time.TimeFormat;
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
-import com.gary.domain.repository.chatMessage.cache.ChatMessageCacheRepository;
-import com.gary.infrastructure.constants.RedisKeys;
+import com.gary.domain.repository.cache.chatMessage.ChatMessageCacheRepository;
 import com.gary.domain.service.chat.ChatCacheService;
-import com.gary.web.dto.chatMessage.cache.ChatMessageCacheDto;
-import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
+import com.gary.web.dto.cache.chatMessage.ChatMessageCacheDto;
+import com.gary.web.dto.rest.chatMessage.ChatMessageResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,8 +24,6 @@ import java.util.UUID;
 @Slf4j
 public class ChatCacheServiceImpl implements ChatCacheService {
 
-    private final RedisTemplate<String, ChatMessageResponse> chatMessageRedisTemplate;
-    private static final Duration MESSAGE_EXPIRATION = Duration.ofHours(6);
     private final MetricIncrement metricIncrement;
     private final ChatMessageCacheRepository  chatMessageCacheRepository;
 
@@ -74,13 +70,19 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "getCachedMessagesFallback")
     public CachedMessagesResult getCachedMessages(UUID user1Id, UUID user2Id, int offset, int limit) {
 
-        String key = RedisKeys.chatMessages(user1Id, user2Id);
+        List<ChatMessageCacheDto> rawMessages = chatMessageCacheRepository
+                .findBySenderIdAndReceiverId(user1Id, user2Id);
 
-        List<ChatMessageResponse> messages = chatMessageRedisTemplate.opsForList().range(key, offset, offset + limit - 1);
+        List<ChatMessageResponse> messages = rawMessages.stream()
+                .sorted(Comparator.comparing(ChatMessageCacheDto::getTimestamp))
+                .skip(offset)
+                .limit(limit)
+                .map(this::mapToResponse)
+                .toList();
 
         ResultStatus status;
 
-        if (messages == null || messages.isEmpty()) {
+        if (messages.isEmpty()) {
             log.info("Timestamp='{}' No cached messages found for users [{} <-> {}] with offset={} and limit={}",
                     TimeFormat.nowTimestamp(), user1Id, user2Id, offset, limit);
             metricIncrement.incrementMetric("cache.chat.message.get", "miss");
@@ -97,6 +99,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
                 .status(status)
                 .build();
     }
+
 
 
     CachedMessagesResult getCachedMessagesFallback(UUID user1Id, UUID user2Id, int offset, int limit, Throwable t) {
@@ -124,17 +127,11 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "clearCachedMessagesFallback")
     public void clearCachedMessages(UUID user1Id, UUID user2Id) {
 
-        String key = RedisKeys.chatMessages(user1Id, user2Id);
+        List<ChatMessageCacheDto> messages = chatMessageCacheRepository.findBySenderIdAndReceiverId(user1Id, user2Id);
+        chatMessageCacheRepository.deleteAll(messages);
 
-        Boolean deleted = chatMessageRedisTemplate.delete(key);
-
-        if (deleted) {
-            log.info("Timestamp='{}' Evicted chat cache for users [{} <-> {}] (key={})",
-                    TimeFormat.nowTimestamp(), user1Id, user2Id, key);
-        } else {
-            log.warn("Timestamp='{}' Attempted to evict chat cache for users [{} <-> {}], but key was not found (key={})",
-                    TimeFormat.nowTimestamp(), user1Id, user2Id, key);
-        }
+        log.info("Timestamp='{}' Cleared cached messages for users [{} -> {}]",
+                TimeFormat.nowTimestamp(), user1Id, user2Id);
 
         metricIncrement.incrementMetric("cache.chat.message.clear", "success");
 
@@ -150,4 +147,15 @@ public class ChatCacheServiceImpl implements ChatCacheService {
 
         metricIncrement.incrementMetric("cache.chat.message.clear", "fallback");
     }
+
+    private ChatMessageResponse mapToResponse(ChatMessageCacheDto dto) {
+        return ChatMessageResponse.builder()
+                .id(dto.getId())
+                .senderId(dto.getSenderId())
+                .receiverId(dto.getReceiverId())
+                .content(dto.getContent())
+                .timestamp(dto.getTimestamp())
+                .build();
+    }
+
 }

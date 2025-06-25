@@ -2,8 +2,8 @@ package com.gary.web.controller.user;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.user.UserService;
-import com.gary.web.dto.SearchUser.SearchUserRequest;
-import com.gary.web.dto.user.UserResponse;
+import com.gary.web.dto.rest.SearchUser.SearchUserRequest;
+import com.gary.web.dto.rest.user.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

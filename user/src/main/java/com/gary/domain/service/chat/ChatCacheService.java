@@ -1,7 +1,7 @@
 package com.gary.domain.service.chat;
 
 import com.gary.application.chat.CachedMessagesResult;
-import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
+import com.gary.web.dto.rest.chatMessage.ChatMessageResponse;
 
 import java.util.UUID;
 

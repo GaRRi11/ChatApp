@@ -1,7 +1,7 @@
 package com.gary.domain.service.friendship;
 
 import com.gary.common.ResultStatus;
-import com.gary.web.dto.user.UserResponse;
+import com.gary.web.dto.rest.user.UserResponse;
 
 import java.util.List;
 import java.util.UUID;

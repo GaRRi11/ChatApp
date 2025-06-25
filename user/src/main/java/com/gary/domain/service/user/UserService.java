@@ -1,9 +1,9 @@
 package com.gary.domain.service.user;
 
 import com.gary.domain.model.user.User;
-import com.gary.web.dto.loginResponse.LoginResponseDto;
-import com.gary.web.dto.user.UserRequest;
-import com.gary.web.dto.user.UserResponse;
+import com.gary.web.dto.rest.loginResponse.LoginResponseDto;
+import com.gary.web.dto.rest.user.UserRequest;
+import com.gary.web.dto.rest.user.UserResponse;
 
 import java.util.Optional;
 import java.util.List;

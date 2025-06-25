@@ -6,7 +6,7 @@ import com.gary.common.metric.MetricIncrement;
 import com.gary.common.ResultStatus;
 import com.gary.common.time.TimeFormat;
 import com.gary.domain.model.token.RefreshToken;
-import com.gary.domain.repository.token.RefreshTokenRepository;
+import com.gary.domain.repository.jpa.token.RefreshTokenRepository;
 import com.gary.domain.service.refreshToken.RefreshTokenService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;

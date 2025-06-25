@@ -2,6 +2,7 @@ package com.gary.web.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -28,6 +29,7 @@ public class ApiExceptionsHandler {
         return buildResponse(e, HttpStatus.NOT_FOUND);
     }
 
+    @MessageExceptionHandler(ServiceUnavailableException.class)
     @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<String> handleServiceUnavailableException(ServiceUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -43,6 +45,7 @@ public class ApiExceptionsHandler {
     }
 
 
+    @MessageExceptionHandler(TooManyRequestsException.class)
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException e) {
         return buildResponse(e, HttpStatus.TOO_MANY_REQUESTS);

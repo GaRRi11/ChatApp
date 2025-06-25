@@ -1,7 +1,7 @@
 package com.gary.application.chat;
 
 import com.gary.common.ResultStatus;
-import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
+import com.gary.web.dto.rest.chatMessage.ChatMessageResponse;
 import lombok.Builder;
 
 import java.util.List;

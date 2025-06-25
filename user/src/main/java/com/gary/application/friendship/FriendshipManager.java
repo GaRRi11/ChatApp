@@ -1,7 +1,7 @@
 package com.gary.application.friendship;
 
 
-import com.gary.domain.repository.friendship.FriendshipRepository;
+import com.gary.domain.repository.jpa.friendship.FriendshipRepository;
 import com.gary.domain.model.friendship.Friendship;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

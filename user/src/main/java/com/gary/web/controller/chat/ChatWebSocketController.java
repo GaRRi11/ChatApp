@@ -1,9 +1,13 @@
 package com.gary.web.controller.chat;
 
+import com.gary.application.rateLimiter.RateLimiterStatus;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.chat.ChatMessageService;
-import com.gary.web.dto.chatMessage.rest.ChatMessageRequest;
-import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
+import com.gary.domain.service.rateLimiter.RateLimiterService;
+import com.gary.web.dto.rest.chatMessage.ChatMessageRequest;
+import com.gary.web.dto.rest.chatMessage.ChatMessageResponse;
+import com.gary.web.exception.ServiceUnavailableException;
+import com.gary.web.exception.TooManyRequestsException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +34,7 @@ public class ChatWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageService chatMessageService;
+    private final RateLimiterService rateLimiterService;
 
 
     @MessageMapping("/send")
@@ -38,24 +44,30 @@ public class ChatWebSocketController {
             @Payload @Valid ChatMessageRequest request,
             @AuthenticationPrincipal User user) {
 
-        try {
-            ChatMessageResponse response = chatMessageService.sendMessage(request, user.getId());
+        UUID senderId = user.getId();
 
-            messagingTemplate.convertAndSendToUser(
-                    request.receiverId().toString(),
-                    "/queue/messages",
-                    response
-            );
+        RateLimiterStatus status = rateLimiterService.isAllowedToSend(senderId);
 
-            log.info("User {} sent message to user {}: {}", user.getId(), request.receiverId(), response.content());
-            return response;
+        switch (status) {
+            case BLOCKED:
+                log.warn("Rate limit exceeded by user {}", senderId);
+                throw new TooManyRequestsException("You're sending messages too quickly. Please wait.");
 
-        } catch (Exception e) {
-            log.error("Failed to send chat message from user {} to user {}: {}", user.getId(), request.receiverId(), e.getMessage(), e);
-            return null;
+            case UNAVAILABLE:
+                log.error("RateLimiter unavailable for user {}", senderId);
+                throw new ServiceUnavailableException("Service is temporarily unavailable. Please try again later.");
+
+            case ALLOWED:
+            default:
+                ChatMessageResponse response = chatMessageService.sendMessage(request, senderId);
+                messagingTemplate.convertAndSendToUser(
+                        request.receiverId().toString(),
+                        "/queue/messages",
+                        response
+                );
+                return response;
         }
     }
-
 
 
     @GetMapping("/history")
@@ -73,14 +85,11 @@ public class ChatWebSocketController {
 
         limit = Math.min(limit, 100);
 
-        try {
-            List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user.getId(), otherUserId, offset, limit);
-            log.info("Chat history fetched for user {} with user {} (offset={}, limit={})", user.getId(), otherUserId, offset, limit);
-            return ResponseEntity.ok(messages);
-        } catch (Exception e) {
-            log.error("Error fetching chat history between users {} and {}: {}", user.getId(), otherUserId, e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
+
+        List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user.getId(), otherUserId, offset, limit);
+
+        return ResponseEntity.ok(messages);
+
     }
 
 }

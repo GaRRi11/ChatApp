@@ -2,10 +2,10 @@ package com.gary.web.controller.auth;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.user.UserService;
-import com.gary.web.dto.loginResponse.LoginResponseDto;
-import com.gary.web.dto.refreshToken.RefreshTokenDto;
-import com.gary.web.dto.user.UserRequest;
-import com.gary.web.dto.user.UserResponse;
+import com.gary.web.dto.rest.loginResponse.LoginResponseDto;
+import com.gary.web.dto.rest.refreshToken.RefreshTokenDto;
+import com.gary.web.dto.rest.user.UserRequest;
+import com.gary.web.dto.rest.user.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

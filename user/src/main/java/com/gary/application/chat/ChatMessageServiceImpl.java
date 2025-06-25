@@ -6,16 +6,14 @@ import com.gary.application.rateLimiter.RateLimiterStatus;
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
 import com.gary.domain.model.chatmessage.ChatMessage;
-import com.gary.domain.repository.chatMessage.cache.ChatMessageCacheRepository;
 import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.chat.ChatMessageService;
 import com.gary.domain.service.chat.ChatPersistenceService;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
-import com.gary.web.dto.chatMessage.cache.ChatMessageCacheDto;
 import com.gary.web.exception.ServiceUnavailableException;
 import com.gary.web.exception.TooManyRequestsException;
-import com.gary.web.dto.chatMessage.rest.ChatMessageRequest;
-import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
+import com.gary.web.dto.rest.chatMessage.ChatMessageRequest;
+import com.gary.web.dto.rest.chatMessage.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +29,6 @@ import java.util.UUID;
 @Slf4j
 public class ChatMessageServiceImpl implements ChatMessageService {
 
-    private final RateLimiterService rateLimiterService;
     private final ChatCacheService chatCacheService;
     private final ChatPersistenceService chatPersistenceService;
 
@@ -42,31 +39,17 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     public ChatMessageResponse sendMessage(ChatMessageRequest request, UUID senderId) {
 
 
-        RateLimiterStatus status = rateLimiterService.isAllowedToSend(senderId);
+        ChatMessage message = buildMessageEntity(request, senderId);
+        ChatMessage savedMessage = chatPersistenceService.saveMessage(message);
 
-        switch (status) {
-            case ALLOWED:
-
-                ChatMessage message = buildMessageEntity(request, senderId);
-                ChatMessage savedMessage = chatPersistenceService.saveMessage(message);
-
-                if (savedMessage == null) {
-                    throw new ServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
-                }
-
-                ChatMessageResponse response = ChatMessageResponse.fromEntity(savedMessage);
-                cacheMessageAsync(response);
-                return response;
-
-            case BLOCKED:
-
-                throw new TooManyRequestsException("You're sending messages too quickly. Please wait.");
-
-            case UNAVAILABLE:
-            default:
-
-                throw new ServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
+        if (savedMessage == null) {
+            throw new ServiceUnavailableException("Message service is temporarily unavailable. Please try again later.");
         }
+
+        ChatMessageResponse response = ChatMessageResponse.fromEntity(savedMessage);
+        cacheMessageAsync(response);
+        return response;
+
     }
 
 

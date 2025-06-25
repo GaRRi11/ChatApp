@@ -12,10 +12,11 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   redis:
-    image: redis:7
+    image: redis/redis-stack:latest
     container_name: redis
     ports:
       - "6379:6379"
+      - "8001:8001"
 
   user-service:
     tty: true
