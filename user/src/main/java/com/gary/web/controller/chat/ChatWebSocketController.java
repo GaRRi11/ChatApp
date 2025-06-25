@@ -2,8 +2,8 @@ package com.gary.web.controller.chat;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.chat.ChatMessageService;
-import com.gary.web.dto.chatMessage.ChatMessageRequest;
-import com.gary.web.dto.chatMessage.ChatMessageResponse;
+import com.gary.web.dto.chatMessage.rest.ChatMessageRequest;
+import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

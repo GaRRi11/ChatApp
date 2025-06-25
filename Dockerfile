@@ -9,7 +9,7 @@ COPY . .
 RUN mvn clean package -pl user -am -DskipTests
 
 # Second stage: Run the app
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:17
 
 WORKDIR /app
 
@@ -17,4 +17,4 @@ WORKDIR /app
 COPY --from=builder /app/user/target/user-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.config.location=file:/app/application.properties"]

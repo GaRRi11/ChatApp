@@ -1,4 +1,4 @@
-package com.gary.web.dto.chatMessage;
+package com.gary.web.dto.chatMessage.rest;
 
 import com.gary.domain.model.chatmessage.ChatMessage;
 import lombok.Builder;

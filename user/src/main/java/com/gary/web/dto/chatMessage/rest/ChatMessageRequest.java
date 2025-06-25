@@ -1,4 +1,4 @@
-package com.gary.web.dto.chatMessage;
+package com.gary.web.dto.chatMessage.rest;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

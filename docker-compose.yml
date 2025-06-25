@@ -1,8 +1,7 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:15
+    container_name: postgres
     environment:
       POSTGRES_DB: Chat_App
       POSTGRES_USER: postgres
@@ -14,11 +13,15 @@ services:
 
   redis:
     image: redis:7
+    container_name: redis
     ports:
       - "6379:6379"
 
   user-service:
+    tty: true
+    stdin_open: true
     image: chatapp-user-service
+    container_name: user-service
     depends_on:
       - postgres
       - redis
@@ -30,7 +33,15 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8080:8080"
+    volumes:
+          - ./user/src/main/resources/application.properties:/app/application.properties
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
 
 volumes:
   pgdata:

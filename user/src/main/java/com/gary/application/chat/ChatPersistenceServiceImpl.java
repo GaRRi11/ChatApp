@@ -6,7 +6,7 @@ import com.gary.common.metric.MetricIncrement;
 import com.gary.common.ResultStatus;
 import com.gary.common.time.TimeFormat;
 import com.gary.domain.model.chatmessage.ChatMessage;
-import com.gary.domain.repository.chatMessage.ChatMessageRepository;
+import com.gary.domain.repository.chatMessage.jpa.ChatMessageRepository;
 import com.gary.domain.service.chat.ChatPersistenceService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;

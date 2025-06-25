@@ -5,9 +5,11 @@ import com.gary.common.ResultStatus;
 import com.gary.common.time.TimeFormat;
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
+import com.gary.domain.repository.chatMessage.cache.ChatMessageCacheRepository;
 import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.chat.ChatCacheService;
-import com.gary.web.dto.chatMessage.ChatMessageResponse;
+import com.gary.web.dto.chatMessage.cache.ChatMessageCacheDto;
+import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     private final RedisTemplate<String, ChatMessageResponse> chatMessageRedisTemplate;
     private static final Duration MESSAGE_EXPIRATION = Duration.ofHours(6);
     private final MetricIncrement metricIncrement;
-
+    private final ChatMessageCacheRepository  chatMessageCacheRepository;
 
     @Override
     @LoggableAction("Cache Chat Message")
@@ -36,19 +38,17 @@ public class ChatCacheServiceImpl implements ChatCacheService {
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "saveFallback")
     public void save(ChatMessageResponse message) {
 
-        String key = RedisKeys.chatMessages(message.senderId(), message.receiverId());
+        ChatMessageCacheDto chatMessageCacheDto = ChatMessageCacheDto.builder()
+                .id(message.id())
+                .senderId(message.senderId())
+                .receiverId(message.receiverId())
+                .content(message.content())
+                .timestamp(message.timestamp())
+                .build();
 
-        boolean isNewKey = !chatMessageRedisTemplate.hasKey(key);
+        chatMessageCacheRepository.save(chatMessageCacheDto);
 
-        chatMessageRedisTemplate.opsForList().rightPush(key, message);
-
-        if (isNewKey) {
-            chatMessageRedisTemplate.expire(key, MESSAGE_EXPIRATION);
-            log.info("Timestamp='{}' New Redis key created: {}. Expiration set to {} hours",
-                    TimeFormat.nowTimestamp(),
-                    key,
-                    MESSAGE_EXPIRATION.toHours());
-        }
+        log.info("Timestamp='{}' Chat message cached: {}", TimeFormat.nowTimestamp(), message.id());
 
         metricIncrement.incrementMetric("cache.chat.message.save", "success");
     }

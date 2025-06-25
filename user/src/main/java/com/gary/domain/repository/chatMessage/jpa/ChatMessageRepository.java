@@ -1,4 +1,4 @@
-package com.gary.domain.repository.chatMessage;
+package com.gary.domain.repository.chatMessage.jpa;
 
 import com.gary.domain.model.chatmessage.ChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;

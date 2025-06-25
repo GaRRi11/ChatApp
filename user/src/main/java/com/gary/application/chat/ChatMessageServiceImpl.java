@@ -6,14 +6,16 @@ import com.gary.application.rateLimiter.RateLimiterStatus;
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
 import com.gary.domain.model.chatmessage.ChatMessage;
+import com.gary.domain.repository.chatMessage.cache.ChatMessageCacheRepository;
 import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.chat.ChatMessageService;
 import com.gary.domain.service.chat.ChatPersistenceService;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
+import com.gary.web.dto.chatMessage.cache.ChatMessageCacheDto;
 import com.gary.web.exception.ServiceUnavailableException;
 import com.gary.web.exception.TooManyRequestsException;
-import com.gary.web.dto.chatMessage.ChatMessageRequest;
-import com.gary.web.dto.chatMessage.ChatMessageResponse;
+import com.gary.web.dto.chatMessage.rest.ChatMessageRequest;
+import com.gary.web.dto.chatMessage.rest.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +40,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @LoggableAction("Send Chat Message")
     @Timed("chat.message.send.duration")
     public ChatMessageResponse sendMessage(ChatMessageRequest request, UUID senderId) {
+
 
         RateLimiterStatus status = rateLimiterService.isAllowedToSend(senderId);
 
