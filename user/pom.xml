@@ -21,19 +21,6 @@
     <dependencies>
 
 
-        <dependency>
-            <groupId>com.redis.om</groupId>
-            <artifactId>redis-om-spring</artifactId>
-            <version>0.9.6</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>io.lettuce</groupId>
-            <artifactId>lettuce-core</artifactId>
-            <version>6.2.4.RELEASE</version>
-        </dependency>
-
 
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -46,6 +33,11 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.redis.om</groupId>
+            <artifactId>redis-om-spring</artifactId>
+            <version>0.8.6</version>
+        </dependency>
 
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -67,4 +59,21 @@
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
 </project>
+

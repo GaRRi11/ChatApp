@@ -26,6 +26,7 @@ public class RefreshToken {
     @Column(unique = true, nullable = false)
     private String token;
 
+    @Builder.Default
     private boolean revoked = false;
 
     private Long expiryDate;

@@ -11,7 +11,7 @@ import com.gary.domain.model.user.User;
 import com.gary.domain.repository.jpa.user.UserRepository;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.exception.*;
-import com.gary.infrastructure.security.JwtTokenUtil;
+import com.gary.infrastructure.jwt.JwtTokenUtil;
 import com.gary.web.dto.rest.loginResponse.LoginResponseDto;
 import com.gary.web.dto.rest.user.UserRequest;
 import com.gary.web.dto.rest.user.UserResponse;

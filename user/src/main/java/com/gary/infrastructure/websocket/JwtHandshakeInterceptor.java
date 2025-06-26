@@ -1,6 +1,6 @@
 package com.gary.infrastructure.websocket;
 
-import com.gary.infrastructure.security.JwtTokenUtil;
+import com.gary.infrastructure.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;

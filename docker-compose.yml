@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15
@@ -17,32 +19,6 @@ services:
     ports:
       - "6379:6379"
       - "8001:8001"
-
-  user-service:
-    tty: true
-    stdin_open: true
-    image: chatapp-user-service
-    container_name: user-service
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/Chat_App
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-    ports:
-      - "8080:8080"
-    volumes:
-          - ./user/src/main/resources/application.properties:/app/application.properties
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-
 
 volumes:
   pgdata:

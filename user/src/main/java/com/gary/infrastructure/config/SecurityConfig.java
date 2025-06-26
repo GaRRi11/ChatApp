@@ -1,6 +1,6 @@
 package com.gary.infrastructure.config;
 
-import com.gary.infrastructure.security.JwtTokenFilter;
+import com.gary.infrastructure.jwt.JwtTokenFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

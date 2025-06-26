@@ -5,7 +5,6 @@ import com.gary.common.annotations.Timed;
 import com.gary.common.metric.MetricIncrement;
 import com.gary.common.time.TimeFormat;
 import com.gary.domain.repository.cache.rateLimiter.RateLimiterCacheRepository;
-import com.gary.infrastructure.constants.RedisKeys;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
 import com.gary.web.dto.cache.rateLimiter.RateLimiterCacheDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

@@ -1,4 +1,4 @@
-package com.gary.infrastructure.security;
+package com.gary.infrastructure.jwt;
 
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;

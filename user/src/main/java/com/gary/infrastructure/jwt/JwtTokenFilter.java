@@ -1,4 +1,4 @@
-package com.gary.infrastructure.security;
+package com.gary.infrastructure.jwt;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.user.UserService;
