@@ -12,7 +12,6 @@ public class TokenCleanupScheduler {
     private final RefreshTokenServiceImpl tokenService;
 
     @Scheduled(fixedDelay = 86_400_000)
-    @LoggableAction("Token Clean Job")
     public void cleanExpiredTokens() {
         tokenService.clearExpiredTokens();
     }

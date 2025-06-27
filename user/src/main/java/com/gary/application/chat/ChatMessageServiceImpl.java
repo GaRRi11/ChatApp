@@ -2,16 +2,13 @@ package com.gary.application.chat;
 
 import com.gary.common.ResultStatus;
 import com.gary.common.time.TimeFormat;
-import com.gary.application.rateLimiter.RateLimiterStatus;
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
 import com.gary.domain.model.chatmessage.ChatMessage;
 import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.chat.ChatMessageService;
 import com.gary.domain.service.chat.ChatPersistenceService;
-import com.gary.domain.service.rateLimiter.RateLimiterService;
-import com.gary.web.exception.ServiceUnavailableException;
-import com.gary.web.exception.TooManyRequestsException;
+import com.gary.web.exception.rest.ServiceUnavailableException;
 import com.gary.web.dto.rest.chatMessage.ChatMessageRequest;
 import com.gary.web.dto.rest.chatMessage.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;

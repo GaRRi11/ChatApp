@@ -1,7 +1,4 @@
-package com.gary.web.exception;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+package com.gary.web.exception.websocket;
 
 public class TooManyRequestsException extends RuntimeException {
     public TooManyRequestsException(String message) {

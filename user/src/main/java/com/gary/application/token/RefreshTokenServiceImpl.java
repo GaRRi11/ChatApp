@@ -37,7 +37,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @CircuitBreaker(name = "defaultCB", fallbackMethod = "createFallback")
     public RefreshToken create(UUID userId) {
         RefreshToken token = RefreshToken.builder()
-                .id(UUID.randomUUID())
                 .userId(userId)
                 .token(UUID.randomUUID().toString())
                 .revoked(false)

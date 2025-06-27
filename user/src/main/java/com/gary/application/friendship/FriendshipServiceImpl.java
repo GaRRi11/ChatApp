@@ -11,7 +11,7 @@ import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.friendship.FriendshipService;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.rest.user.UserResponse;
-import com.gary.web.exception.ServiceUnavailableException;
+import com.gary.web.exception.rest.ServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
