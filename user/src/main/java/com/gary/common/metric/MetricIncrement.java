@@ -14,4 +14,8 @@ public class MetricIncrement {
         meterRegistry.counter(name, "status", status).increment();
     }
 
+    public void incrementMetric(String name) {
+        meterRegistry.counter(name).increment();
+    }
+
 }

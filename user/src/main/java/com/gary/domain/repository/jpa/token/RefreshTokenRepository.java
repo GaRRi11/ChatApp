@@ -20,4 +20,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     void deleteExpiredTokens(@Param("now") long now);
 
 
+    Optional<RefreshToken> findByUserId(UUID userId);
+
+    UUID getUserIdByToken(String token);
 }

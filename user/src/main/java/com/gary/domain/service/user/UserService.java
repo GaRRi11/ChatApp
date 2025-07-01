@@ -18,7 +18,7 @@ public interface UserService {
 
     LoginResponseDto login(UserRequest userRequest);
 
-    boolean logout(User user);
+    void logout(User user);
 
     List<User> findAllById(List<UUID> userIds);
 
