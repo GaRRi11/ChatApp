@@ -49,7 +49,6 @@ public class UserServiceImpl implements UserService {
     )
     @LoggableAction("User Register")
     @Timed("user.register.duration")
-//  @Retryable(value = SQLException.class, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public UserResponse register(UserRequest userRequest) {
 
         if (userTransactionHelper.findByUsername(userRequest.username()).isPresent()) {
@@ -93,7 +92,6 @@ public class UserServiceImpl implements UserService {
             propagation = Propagation.SUPPORTS,
             isolation = Isolation.READ_COMMITTED
     )
-//  @Retryable(value = SQLException.class, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public List<UserResponse> searchByUsername(String username, UUID requesterId) {
 
         return userTransactionHelper.findByUsername(username).stream()
@@ -108,16 +106,15 @@ public class UserServiceImpl implements UserService {
             readOnly = true,
             propagation = Propagation.REQUIRED,
             isolation = Isolation.READ_COMMITTED)
-    //@Retryable(value = SQLException.class, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public LoginResponseDto login(UserRequest userRequest) {
 
         User user = userTransactionHelper.findByUsername(userRequest.username())
                 .orElseThrow(() -> {
+                    metricIncrement.incrementMetric("user.login", "fail");
                     log.warn("Timestamp='{}' Login failed: username '{}' not found",
                             TimeFormat.nowTimestamp(),
                             userRequest.username());
-                    metricIncrement.incrementMetric("user.login", "fail");
-                    return new UnauthorizedException("Invalid Username");
+                    return new UnauthorizedException("Invalid Credentials");
                 });
 
         if (!passwordEncoder.matches(userRequest.password(), user.getPassword())) {
@@ -125,7 +122,7 @@ public class UserServiceImpl implements UserService {
             log.warn("Timestamp='{}' Login failed: invalid password for username '{}'",
                     TimeFormat.nowTimestamp(),
                     userRequest.username());
-            throw new UnauthorizedException("Invalid Password");
+            throw new UnauthorizedException("Invalid Credentials");
         }
 
         String accessToken = jwtTokenUtil.generateAccessToken(user.getId(), user.getUsername());
@@ -145,6 +142,7 @@ public class UserServiceImpl implements UserService {
         RefreshToken refreshTokenObject = optionalToken.get();
 
         if (refreshTokenObject.getExpiryDate() < Instant.now().toEpochMilli()) {
+
             refreshToken = tokenService.create(user.getId()).getToken();
             return LoginResponseDto.builder()
                     .token(accessToken)
@@ -165,11 +163,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @LoggableAction("User Logout")
     public void logout(User user) {
-
         tokenService.deleteByUser(user.getId());
-
-        metricIncrement.incrementMetric("user.logout");
-
     }
 
     @Override

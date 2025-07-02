@@ -25,6 +25,14 @@ public class ApiExceptionsHandler {
         return new ResponseEntity<>(errorResponse, status);
     }
 
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<String> handleBadRequestException(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+
     @ExceptionHandler({
             org.springframework.transaction.CannotCreateTransactionException.class,
             java.sql.SQLTransientConnectionException.class,
@@ -36,11 +44,6 @@ public class ApiExceptionsHandler {
                 .body("Database temporarily unavailable");
     }
 
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGenericException(Exception e) {
-        return buildResponse(new RuntimeException("Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
 
 
     @ExceptionHandler(ResourceNotFoundException.class)

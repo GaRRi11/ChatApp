@@ -5,11 +5,10 @@ import com.gary.common.annotations.Timed;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.domain.repository.jpa.token.RefreshTokenRepository;
 import com.gary.domain.service.refreshToken.RefreshTokenService;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -50,18 +49,25 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .expiryDate(Instant.now().toEpochMilli() + refreshTokenDurationMs)
                 .build();
 
-        return refreshTokenRepository.save(token);
+        try {
+            return refreshTokenRepository.save(token);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Concurrent refresh token creation detected, retrying fetch...");
+            return refreshTokenRepository.findByUserId(userId)
+                    .orElseThrow(() -> new IllegalStateException("Token creation race condition"));
+        }
     }
 
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void deleteByUser(UUID userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
 
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     @Timed("refreshToken.clearExpired.duration")
     public void clearExpiredTokens() {
         refreshTokenRepository.deleteExpiredTokens(Instant.now().toEpochMilli());

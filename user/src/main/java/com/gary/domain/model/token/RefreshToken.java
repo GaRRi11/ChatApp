@@ -21,6 +21,7 @@ public class RefreshToken {
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
     private UUID id;
 
+    @Column(unique = true, nullable = false)
     private UUID userId;
 
     @Column(unique = true, nullable = false)

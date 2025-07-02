@@ -1,6 +1,5 @@
 package com.gary.web.controller.chat;
 
-import com.gary.application.rateLimiter.RateLimiterStatus;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.chat.ChatMessageService;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
@@ -34,7 +33,6 @@ public class ChatWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageService chatMessageService;
-    private final RateLimiterService rateLimiterService;
 
 
     @MessageMapping("/send")
@@ -46,27 +44,13 @@ public class ChatWebSocketController {
 
         UUID senderId = user.getId();
 
-        RateLimiterStatus status = rateLimiterService.isAllowedToSend(senderId);
-
-        switch (status) {
-            case BLOCKED:
-                log.warn("Rate limit exceeded by user {}", senderId);
-                throw new TooManyRequestsException("You're sending messages too quickly. Please wait.");
-
-            case UNAVAILABLE:
-                log.error("RateLimiter unavailable for user {}", senderId);
-                throw new ServiceUnavailableException("Service is temporarily unavailable. Please try again later.");
-
-            case ALLOWED:
-            default:
-                ChatMessageResponse response = chatMessageService.sendMessage(request, senderId);
-                messagingTemplate.convertAndSendToUser(
-                        request.receiverId().toString(),
-                        "/queue/messages",
-                        response
-                );
-                return response;
-        }
+        ChatMessageResponse response = chatMessageService.sendMessage(request, senderId);
+        messagingTemplate.convertAndSendToUser(
+                request.receiverId().toString(),
+                "/queue/messages",
+                response
+        );
+        return response;
     }
 
 
@@ -89,9 +73,7 @@ public class ChatWebSocketController {
         List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user.getId(), otherUserId, offset, limit);
 
         return ResponseEntity.ok(messages);
-
     }
-
 }
 
 

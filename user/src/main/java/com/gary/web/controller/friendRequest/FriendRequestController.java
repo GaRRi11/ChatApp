@@ -1,6 +1,6 @@
 package com.gary.web.controller.friendRequest;
 
-import com.gary.common.ResultStatus;
+import com.gary.common.status.ResultStatus;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendRequest.FriendRequestService;
 import com.gary.domain.service.friendship.FriendshipService;
@@ -35,15 +35,6 @@ public class FriendRequestController {
             @AuthenticationPrincipal User authenticatedUser) {
 
         UUID senderId = authenticatedUser.getId();
-
-        if (friendshipService.areFriends(senderId,receiverId) == ResultStatus.FALLBACK){
-            throw new ServiceUnavailableException("Failed to send friend request from " + senderId +
-                    " to " + receiverId + "Try again later");
-        }
-
-        if (friendshipService.areFriends(senderId, receiverId) ==  ResultStatus.HIT) {
-            throw new DuplicateResourceException("Friendship between user:" + senderId + "and " + receiverId + "already exists");
-        }
 
         FriendRequestResponse sentRequest = friendRequestService.sendRequest(senderId, receiverId);
         return ResponseEntity.ok(sentRequest);

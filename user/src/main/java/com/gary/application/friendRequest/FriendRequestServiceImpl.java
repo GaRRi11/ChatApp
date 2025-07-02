@@ -2,25 +2,24 @@ package com.gary.application.friendRequest;
 
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
-import com.gary.common.metric.MetricIncrement;
 import com.gary.common.time.TimeFormat;
 import com.gary.application.friendship.FriendshipManager;
 import com.gary.domain.model.friendrequest.FriendRequest;
 import com.gary.domain.model.friendrequest.RequestStatus;
 import com.gary.domain.repository.jpa.friendRequest.FriendRequestRepository;
 import com.gary.domain.service.friendRequest.FriendRequestService;
+import com.gary.domain.service.friendship.FriendshipService;
 import com.gary.web.dto.rest.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.rest.friendRequest.FriendRequestResponse;
+import com.gary.web.exception.rest.BadRequestException;
 import com.gary.web.exception.rest.DuplicateResourceException;
 import com.gary.web.exception.rest.ResourceNotFoundException;
-import com.gary.web.exception.rest.ServiceUnavailableException;
 import com.gary.web.exception.rest.UnauthorizedException;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,15 +32,20 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipManager friendshipManager;
-    private final MetricIncrement metricIncrement;
+    private final FriendshipService  friendshipService;
 
     @Override
-    @Transactional
     @LoggableAction("Send Friend Request")
     @Timed("friendRequest.send.duration")
-    @Retry(name = "defaultRetry")
-    @CircuitBreaker(name = "defaultCB", fallbackMethod = "sendRequestFallback")
     public FriendRequestResponse sendRequest(UUID senderId, UUID receiverId) {
+
+        if (senderId.equals(receiverId)) {
+            throw new BadRequestException("Cannot send a friend request to yourself.");
+        }
+
+        if (friendshipService.areFriends(senderId, receiverId)) {
+            throw new DuplicateResourceException("Friendship already exists");
+        }
 
         boolean exists = friendRequestRepository.existsBySenderIdAndReceiverIdAndStatusIn(
                 senderId,
@@ -62,33 +66,14 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         FriendRequest saved = friendRequestRepository.save(newRequest);
 
-        FriendRequestResponse response = FriendRequestResponse.fromEntity(saved);
-
-        metricIncrement.incrementMetric("friend.request.send", "success");
-
-        return response;
+        return FriendRequestResponse.fromEntity(saved);
     }
 
 
-    FriendRequestResponse sendRequestFallback(UUID senderId, UUID receiverId, Throwable t) {
-
-        log.warn("Timestamp='{}' Failed to send friend request from senderId={} to receiverId={}. Cause: {}",
-                TimeFormat.nowTimestamp(),
-                senderId,
-                receiverId,
-                t.toString());
-
-        metricIncrement.incrementMetric("friend.request.send", "fallback");
-
-        throw new ServiceUnavailableException("Service temporarily unavailable. Please try again later.");
-    }
-
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     @Override
     @LoggableAction("Respond Friend Request")
     @Timed("friendRequest.respond.duration")
-    @Retry(name = "defaultRetry")
-    @CircuitBreaker(name = "defaultCB", fallbackMethod = "respondToRequestFallback")
     public void respondToRequest(RespondToFriendDto dto, UUID userId) {
 
         FriendRequest request = friendRequestRepository.findById(dto.requestId())
@@ -110,7 +95,6 @@ public class FriendRequestServiceImpl implements FriendRequestService {
         RequestStatus newStatus = dto.accept() ? RequestStatus.ACCEPTED : RequestStatus.DECLINED;
         request.setStatus(newStatus);
         request.setRespondedAt(LocalDateTime.now());
-        friendRequestRepository.save(request);
 
         if (newStatus == RequestStatus.ACCEPTED) {
             friendshipManager.saveBidirectional(request.getSenderId(), request.getReceiverId());
@@ -124,28 +108,11 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                     request.getSenderId(),
                     request.getReceiverId());
         }
-
-
-        metricIncrement.incrementMetric("friend.request.respond", "success");
     }
 
-
-    void respondToRequestFallback(RespondToFriendDto dto, UUID userId, Throwable t) {
-        log.warn("Timestamp='{}' Failed to respond to friend request from user {} to requestId={}. Cause: {}",
-                TimeFormat.nowTimestamp(),
-                userId,
-                dto.requestId(),
-                t.toString());
-
-        metricIncrement.incrementMetric("friend.request.respond", "fallback");
-
-        throw new ServiceUnavailableException("Service temporarily unavailable. Please try again later.");
-    }
 
     @Override
     @LoggableAction("Get Pending Friend Requests")
-    @Retry(name = "defaultRetry")
-    @CircuitBreaker(name = "defaultCB", fallbackMethod = "getPendingRequestsFallback")
     public List<FriendRequestResponse> getPendingRequests(UUID userId) {
 
         return friendRequestRepository
@@ -155,34 +122,15 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     }
 
-    List<FriendRequestResponse> getPendingRequestsFallback(UUID userId, Throwable t) {
-        log.warn("Timestamp='{}' Fallback: Failed to fetch pending friend requests for userId={}. Cause: {}",
-                TimeFormat.nowTimestamp(),
-                userId,
-                t.toString());
-
-        throw new ServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
-    }
 
     @Override
     @LoggableAction("Get Sent Friend Requests")
-    @Retry(name = "defaultRetry")
-    @CircuitBreaker(name = "defaultCB", fallbackMethod = "getSentRequestsFallback")
     public List<FriendRequestResponse> getSentRequests(UUID userId) {
 
         return friendRequestRepository
                 .findBySenderIdAndStatus(userId, RequestStatus.PENDING).stream()
                 .map(FriendRequestResponse::fromEntity)
                 .toList();
-    }
-
-    List<FriendRequestResponse> getSentRequestsFallback(UUID userId, Throwable t) {
-        log.warn("Timestamp='{}' Fallback: Failed to fetch sent friend requests for userId={}. Cause: {}",
-                TimeFormat.nowTimestamp(),
-                userId,
-                t.toString());
-
-        throw new ServiceUnavailableException("Unable to retrieve pending friend requests. Please try again later.");
     }
 
 
