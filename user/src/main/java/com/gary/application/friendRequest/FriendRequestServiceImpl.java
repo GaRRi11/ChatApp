@@ -9,12 +9,12 @@ import com.gary.domain.model.friendrequest.RequestStatus;
 import com.gary.domain.repository.jpa.friendRequest.FriendRequestRepository;
 import com.gary.domain.service.friendRequest.FriendRequestService;
 import com.gary.domain.service.friendship.FriendshipService;
+import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.rest.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.rest.friendRequest.FriendRequestResponse;
 import com.gary.web.exception.rest.BadRequestException;
 import com.gary.web.exception.rest.DuplicateResourceException;
 import com.gary.web.exception.rest.ResourceNotFoundException;
-import com.gary.web.exception.rest.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -32,29 +33,32 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipManager friendshipManager;
-    private final FriendshipService  friendshipService;
+    private final UserService userService;
+    private final FriendshipService friendshipService;
 
     @Override
     @LoggableAction("Send Friend Request")
     @Timed("friendRequest.send.duration")
     public FriendRequestResponse sendRequest(UUID senderId, UUID receiverId) {
 
+        if (userService.findById(receiverId).isEmpty()) {
+            log.error("User with id {} not found", receiverId);
+            throw new ResourceNotFoundException("User with ID " + receiverId + " not found");
+        }
+
         if (senderId.equals(receiverId)) {
-            throw new BadRequestException("Cannot send a friend request to yourself.");
+            log.warn("User {} attempted to send a friend request to themselves.", senderId);
+            throw new BadRequestException("FriendRequestController: User can't send a friend request to themselves.");
         }
 
         if (friendshipService.areFriends(senderId, receiverId)) {
-            throw new DuplicateResourceException("Friendship already exists");
+            log.warn("User {} attempted to send a friend request to already-friended user {}.", senderId, receiverId);
+            throw new BadRequestException("Friend request cannot be sent. User " + receiverId + " is already in your friends list.");
         }
 
-        boolean exists = friendRequestRepository.existsBySenderIdAndReceiverIdAndStatusIn(
-                senderId,
-                receiverId,
-                List.of(RequestStatus.PENDING, RequestStatus.ACCEPTED)
-        );
-
-        if (exists) {
-            throw new DuplicateResourceException("Friend request already exists");
+        if (existsBySenderIdAndReceiverIdAndStatusIn(senderId, receiverId)) {
+            log.warn("User {} attempted to send a duplicate friend request to user {}.", senderId, receiverId);
+            throw new DuplicateResourceException("Friend request already sent to user " + receiverId + ".");
         }
 
         FriendRequest newRequest = FriendRequest.builder()
@@ -76,20 +80,28 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     @Timed("friendRequest.respond.duration")
     public void respondToRequest(RespondToFriendDto dto, UUID userId) {
 
-        FriendRequest request = friendRequestRepository.findById(dto.requestId())
-                .orElseThrow(() -> {
-                    log.warn("Timestamp='{}' Friend request not found for requestId={}.",
-                            TimeFormat.nowTimestamp(),
-                            dto.requestId());
-                    return new ResourceNotFoundException("Friend Request By Id:" + dto.requestId() + "Does not exist");
-                });
+        UUID requestId = dto.requestId();
 
-        if (!request.getReceiverId().equals(userId)) {
-            log.warn("Timestamp='{}' User {} is not authorized to respond to friend request {}.",
-                    TimeFormat.nowTimestamp(),
-                    userId,
-                    dto.requestId());
-            throw new UnauthorizedException("You are not authorized to respond to this friend request");
+        Optional<FriendRequest> optionalRequest = friendRequestRepository.findById(requestId);
+
+        if (optionalRequest.isEmpty()) {
+            log.warn("Friend request not found for requestId={}.", dto.requestId());
+            throw new ResourceNotFoundException("Friend Request By Id:" + dto.requestId() + "Does not exist");
+        }
+
+        FriendRequest request = optionalRequest.get();
+
+        if (request.getStatus() != RequestStatus.PENDING) {
+            log.warn("Cannot respond to friend request {} because its status is {}.", requestId, request.getStatus());
+            throw new DuplicateResourceException("This friend request has already been processed.");
+        }
+
+        if (friendshipService.areFriends(request.getSenderId(), request.getReceiverId())) {
+            log.warn("Duplicate friend request: Users {} and {} are already friends.",
+                    request.getSenderId(), request.getReceiverId());
+            throw new DuplicateResourceException(
+                    "Friend request is invalid because users are already friends."
+            );
         }
 
         RequestStatus newStatus = dto.accept() ? RequestStatus.ACCEPTED : RequestStatus.DECLINED;
@@ -98,16 +110,16 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         if (newStatus == RequestStatus.ACCEPTED) {
             friendshipManager.saveBidirectional(request.getSenderId(), request.getReceiverId());
-            log.info("Timestamp='{}' Accepted friend request between {} and {}.",
-                    TimeFormat.nowTimestamp(),
-                    request.getSenderId(),
-                    request.getReceiverId());
-        } else {
-            log.info("Timestamp='{}' Declined friend request between {} and {}.",
-                    TimeFormat.nowTimestamp(),
-                    request.getSenderId(),
-                    request.getReceiverId());
         }
+    }
+
+    @Override
+    public boolean existsBySenderIdAndReceiverIdAndStatusIn(UUID senderId, UUID receiverId) {
+        return friendRequestRepository.existsBySenderIdAndReceiverIdAndStatusIn(
+                senderId,
+                receiverId,
+                List.of(RequestStatus.PENDING, RequestStatus.ACCEPTED)
+        );
     }
 
 

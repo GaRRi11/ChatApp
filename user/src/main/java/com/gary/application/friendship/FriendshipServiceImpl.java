@@ -10,13 +10,15 @@ import com.gary.domain.service.chat.ChatCacheService;
 import com.gary.domain.service.friendship.FriendshipService;
 import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.rest.user.UserResponse;
-import com.gary.web.exception.rest.ServiceUnavailableException;
+import com.gary.web.exception.rest.BadRequestException;
+import com.gary.web.exception.rest.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,6 +43,10 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .map(Friendship::getFriendId)
                 .collect(Collectors.toList());
 
+        if (friendIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<User> friends = userService.findAllById(friendIds);
 
         return friends.stream()
@@ -53,7 +59,6 @@ public class FriendshipServiceImpl implements FriendshipService {
     @LoggableAction("Are Friends Check")
     public boolean areFriends(UUID senderId, UUID receiverId) {
         return friendshipRepository.existsByUserIdAndFriendId(senderId, receiverId);
-
     }
 
 
@@ -61,21 +66,26 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     @LoggableAction("Remove Friends")
     public void removeFriend(UUID userId, UUID friendId) {
-        try {
-            friendshipManager.deleteBidirectional(userId, friendId);
 
-            chatCacheService.clearCachedMessages(userId, friendId);
-
-        } catch (RuntimeException e) {
-            log.error("Timestamp='{}' Failed to remove friendship between userId={} and friendId={}. Cause: {}",
-                    TimeFormat.nowTimestamp(),
-                    userId,
-                    friendId,
-                    e,
-                    e);
-
-            throw new ServiceUnavailableException("Failed to fetch friends for userId=" + userId);
+        if (friendId.equals(userId)) {
+            log.warn("User {} attempted to remove themselves as a friend", userId);
+            throw new  BadRequestException("You can't remove yourself as a friend");
         }
+
+        if (userService.findById(friendId).isEmpty()) {
+            log.debug("removeFriend - Not Found: friendId {} does not exist, requested by userId {}", friendId, userId);
+            throw new ResourceNotFoundException("User with ID " + userId + " not found");
+        }
+
+        if (areFriends(userId, friendId)) {
+            log.debug("removeFriend - Not Found: User {} tried to remove non-friend {}", userId, friendId);
+            throw new ResourceNotFoundException("User " + userId + " is not friends with user " + friendId + ".");
+        }
+
+        friendshipManager.deleteBidirectional(userId, friendId);
+
+        chatCacheService.clearCachedMessages(userId, friendId);
+
     }
 
 }

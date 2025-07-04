@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
-    Optional<User> getById(UUID id);
+    Optional<User> findById(UUID id);
 
     UserResponse register(UserRequest userRequest);
 
@@ -22,5 +22,5 @@ public interface UserService {
 
     List<User> findAllById(List<UUID> userIds);
 
-    List<UserResponse> searchByUsername(String username, UUID id);
+    List<UserResponse> searchByUsername(String username);
 }

@@ -2,9 +2,11 @@ package com.gary.web.controller.friendship;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendship.FriendshipService;
+import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.rest.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,12 +22,19 @@ import java.util.UUID;
 public class FriendshipController {
 
     private final FriendshipService friendshipService;
+    private final UserService userService;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<UserResponse>> getFriends(@AuthenticationPrincipal User authenticatedUser) {
+
         UUID userId = authenticatedUser.getId();
         List<UserResponse> friends = friendshipService.getFriends(userId);
+
+        if (friends.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
         return ResponseEntity.ok(friends);
     }
 
@@ -34,12 +43,6 @@ public class FriendshipController {
     public ResponseEntity<Void> removeFriend(@AuthenticationPrincipal User authenticatedUser,
                                              @PathVariable UUID friendId) {
         UUID userId = authenticatedUser.getId();
-
-        if (friendId == null) {
-            log.warn("Invalid friendId received in removeFriend: {}", friendId);
-            return ResponseEntity.badRequest().build();
-        }
-
         friendshipService.removeFriend(userId, friendId);
         return ResponseEntity.noContent().build();
     }

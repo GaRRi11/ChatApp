@@ -92,10 +92,8 @@ public class UserServiceImpl implements UserService {
             propagation = Propagation.SUPPORTS,
             isolation = Isolation.READ_COMMITTED
     )
-    public List<UserResponse> searchByUsername(String username, UUID requesterId) {
-
+    public List<UserResponse> searchByUsername(String username) {
         return userTransactionHelper.findByUsername(username).stream()
-                .filter(user -> !user.getId().equals(requesterId))
                 .map(UserResponse::fromEntity)
                 .toList();
     }
@@ -185,7 +183,7 @@ public class UserServiceImpl implements UserService {
 
         UUID userId = refreshToken.getUserId();
 
-        Optional<User> optionalUser = getById(userId);
+        Optional<User> optionalUser = findById(userId);
 
         if (optionalUser.isEmpty()) {
             throw new UnauthorizedException("Invalid Token");
@@ -203,7 +201,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Optional<User> getById(UUID id) {
+    public Optional<User> findById(UUID id) {
         return userTransactionHelper.findById(id);
     }
 

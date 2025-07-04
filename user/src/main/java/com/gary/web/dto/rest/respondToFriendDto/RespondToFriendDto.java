@@ -6,8 +6,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.util.UUID;
 
 public record RespondToFriendDto(
-        @NotNull(message = "Sender ID must not be blank")
-        @PositiveOrZero(message = "Request ID must be a positive number")
+        @NotNull(message = "Request ID must not be blank")
         UUID requestId,
 
         @NotNull (message = "Respond status must be provided")

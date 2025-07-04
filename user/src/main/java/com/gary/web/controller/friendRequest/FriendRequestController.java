@@ -1,16 +1,15 @@
 package com.gary.web.controller.friendRequest;
 
-import com.gary.common.status.ResultStatus;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendRequest.FriendRequestService;
 import com.gary.domain.service.friendship.FriendshipService;
+import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.rest.respondToFriendDto.RespondToFriendDto;
 import com.gary.web.dto.rest.friendRequest.FriendRequestResponse;
-import com.gary.web.exception.rest.DuplicateResourceException;
-import com.gary.web.exception.rest.ServiceUnavailableException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,15 +26,15 @@ public class FriendRequestController {
 
     private final FriendRequestService friendRequestService;
     private final FriendshipService friendshipService;
+    private final UserService userService;
 
-    @PostMapping("/send")
+    @PostMapping("/send/{receiverId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<FriendRequestResponse> sendRequest(
-            @RequestParam UUID receiverId,
+            @PathVariable UUID receiverId,
             @AuthenticationPrincipal User authenticatedUser) {
 
         UUID senderId = authenticatedUser.getId();
-
         FriendRequestResponse sentRequest = friendRequestService.sendRequest(senderId, receiverId);
         return ResponseEntity.ok(sentRequest);
     }
@@ -48,9 +47,8 @@ public class FriendRequestController {
             @AuthenticationPrincipal User authenticatedUser) {
 
         UUID userId = authenticatedUser.getId();
-
         friendRequestService.respondToRequest(dto, userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/pending")

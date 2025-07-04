@@ -59,7 +59,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
             UUID userId = jwtTokenUtil.extractUserId(token);
 
-            Optional<User> userOpt = userService.getById(userId);
+            Optional<User> userOpt = userService.findById(userId);
 
             if (userOpt.isEmpty()) {
                 log.warn("User not found with ID extracted from JWT token");

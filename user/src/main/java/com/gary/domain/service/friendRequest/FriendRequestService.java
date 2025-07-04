@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.UUID;
 
 
-public interface
-FriendRequestService {
+public interface FriendRequestService {
 
     FriendRequestResponse sendRequest(UUID senderId, UUID receiverId);
 
 
     void respondToRequest(RespondToFriendDto responseDto, UUID userId);
 
+    boolean existsBySenderIdAndReceiverIdAndStatusIn(UUID senderId, UUID receiverId);
 
     List<FriendRequestResponse> getPendingRequests(UUID userId);
 
