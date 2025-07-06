@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface ChatMessageService {
     ChatMessageResponse sendMessage(ChatMessageRequest request, UUID userId);
-    List<ChatMessageResponse> getChatHistory(UUID user1Id, UUID user2Id, int offset, int limit);
+    List<ChatMessageResponse> getChatHistory(UUID senderId, UUID receiverId, int offset, int limit);
 }

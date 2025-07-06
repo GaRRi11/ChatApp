@@ -5,6 +5,7 @@ import com.gary.common.annotations.Timed;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.domain.repository.jpa.token.RefreshTokenRepository;
 import com.gary.domain.service.refreshToken.RefreshTokenService;
+import com.gary.web.exception.rest.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +35,15 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
+    public RefreshToken verifyExpiration(RefreshToken token) {
+        if (token.getExpiryDate() < Instant.now().toEpochMilli()) {
+            refreshTokenRepository.delete(token);
+            throw new UnauthorizedException("Token Is Expired");
+        }
+        return token;
+    }
+
+    @Override
     @Transactional(
             propagation = Propagation.REQUIRED,
             isolation = Isolation.SERIALIZABLE
@@ -49,13 +59,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .expiryDate(Instant.now().toEpochMilli() + refreshTokenDurationMs)
                 .build();
 
-        try {
-            return refreshTokenRepository.save(token);
-        } catch (DataIntegrityViolationException e) {
-            log.warn("Concurrent refresh token creation detected, retrying fetch...");
-            return refreshTokenRepository.findByUserId(userId)
-                    .orElseThrow(() -> new IllegalStateException("Token creation race condition"));
-        }
+        return refreshTokenRepository.save(token);
+
     }
 
 
@@ -74,7 +79,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    public Optional<RefreshToken> findByUserId(UUID userId) {
+    public Optional<RefreshToken> findByUserId(UUID userId) { //delete
         return refreshTokenRepository.findByUserId(userId);
     }
 }

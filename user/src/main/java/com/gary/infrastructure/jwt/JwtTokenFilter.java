@@ -43,7 +43,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             Optional<String> tokenOpt = extractToken(request);
 
             if (tokenOpt.isEmpty()) {
-                // No token provided, continue without authentication (let Spring Security handle it)
                 log.debug("No JWT token found in request headers");
                 filterChain.doFilter(request, response);
                 return;

@@ -2,11 +2,9 @@ package com.gary.web.controller.friendship;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.friendship.FriendshipService;
-import com.gary.domain.service.user.UserService;
 import com.gary.web.dto.rest.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,7 +20,7 @@ import java.util.UUID;
 public class FriendshipController {
 
     private final FriendshipService friendshipService;
-    private final UserService userService;
+
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")

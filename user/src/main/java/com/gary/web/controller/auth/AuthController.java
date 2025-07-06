@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -36,7 +38,8 @@ public class AuthController {
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal User authenticatedUser) {
-        userService.logout(authenticatedUser);
+        UUID  userId = authenticatedUser.getId();
+        userService.logout(userId);
         return ResponseEntity.ok().build();
     }
 

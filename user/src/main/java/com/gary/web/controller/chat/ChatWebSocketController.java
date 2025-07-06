@@ -2,11 +2,8 @@ package com.gary.web.controller.chat;
 
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.chat.ChatMessageService;
-import com.gary.domain.service.rateLimiter.RateLimiterService;
 import com.gary.web.dto.rest.chatMessage.ChatMessageRequest;
 import com.gary.web.dto.rest.chatMessage.ChatMessageResponse;
-import com.gary.web.exception.rest.ServiceUnavailableException;
-import com.gary.web.exception.websocket.TooManyRequestsException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -43,7 +41,6 @@ public class ChatWebSocketController {
             @AuthenticationPrincipal User user) {
 
         UUID senderId = user.getId();
-
         ChatMessageResponse response = chatMessageService.sendMessage(request, senderId);
         messagingTemplate.convertAndSendToUser(
                 request.receiverId().toString(),
@@ -54,23 +51,22 @@ public class ChatWebSocketController {
     }
 
 
-    @GetMapping("/history")
+    @GetMapping("/history/{receiverId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ChatMessageResponse>> getChatHistory(
             @AuthenticationPrincipal User user,
-            @RequestParam UUID otherUserId,
+            @PathVariable UUID receiverId,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "50") int limit) {
 
-        if (otherUserId == null || user.getId().equals(otherUserId)) {
-            log.warn("Invalid request to fetch chat history. userId={}, otherUserId={}", user != null ? user.getId() : null, otherUserId);
+        if (offset < 0 || limit <= 0) {
+            log.warn("Invalid pagination: offset={}, limit={}", offset, limit);
             return ResponseEntity.badRequest().build();
         }
 
         limit = Math.min(limit, 100);
 
-
-        List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user.getId(), otherUserId, offset, limit);
+        List<ChatMessageResponse> messages = chatMessageService.getChatHistory(user.getId(), receiverId, offset, limit);
 
         return ResponseEntity.ok(messages);
     }

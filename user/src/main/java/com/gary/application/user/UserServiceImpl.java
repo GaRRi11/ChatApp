@@ -160,8 +160,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @LoggableAction("User Logout")
-    public void logout(User user) {
-        tokenService.deleteByUser(user.getId());
+    public void logout(UUID userId) {
+        tokenService.deleteByUser(userId);
     }
 
     @Override
@@ -172,14 +172,10 @@ public class UserServiceImpl implements UserService {
         Optional<RefreshToken> optionalToken = tokenService.getTokenObject(token);
 
         if (optionalToken.isEmpty()) {
-            throw new UnauthorizedException("Token Does Not Exist");
+            throw new UnauthorizedException("Refresh token is not in database!");
         }
 
-        RefreshToken refreshToken = optionalToken.get();
-
-        if (refreshToken.getExpiryDate() < Instant.now().toEpochMilli()) {
-            throw new UnauthorizedException("Token Is Expired");
-        }
+        RefreshToken refreshToken = tokenService.verifyExpiration(optionalToken.get());
 
         UUID userId = refreshToken.getUserId();
 
