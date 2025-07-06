@@ -35,12 +35,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    public RefreshToken verifyExpiration(RefreshToken token) {
+    public boolean verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate() < Instant.now().toEpochMilli()) {
             refreshTokenRepository.delete(token);
-            throw new UnauthorizedException("Token Is Expired");
+            return false;
         }
-        return token;
+        return true;
     }
 
     @Override
@@ -55,7 +55,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken token = RefreshToken.builder()
                 .userId(userId)
                 .token(UUID.randomUUID().toString())
-                .revoked(false)
                 .expiryDate(Instant.now().toEpochMilli() + refreshTokenDurationMs)
                 .build();
 

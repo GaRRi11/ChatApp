@@ -2,7 +2,6 @@ package com.gary.application.rateLimiter;
 
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
-import com.gary.common.metric.MetricIncrement;
 import com.gary.common.time.TimeFormat;
 import com.gary.domain.repository.cache.rateLimiter.RateLimiterCacheRepository;
 import com.gary.domain.service.rateLimiter.RateLimiterService;
@@ -21,8 +20,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class RateLimiterServiceImpl implements RateLimiterService {
-
-    private final MetricIncrement metricIncrement;
 
     private final RateLimiterCacheRepository  rateLimiterCacheRepository;
 
@@ -57,12 +54,10 @@ public class RateLimiterServiceImpl implements RateLimiterService {
         rateLimiterCacheRepository.save(dto);
 
         if (dto.getCount() <= messageLimit) {
-            metricIncrement.incrementMetric("rateLimiter.isAllowed", "allowed");
             return true;
         } else {
             log.warn("Timestamp='{}' User {} exceeded rate limit. Count: {}",
                     TimeFormat.nowTimestamp(), userId, dto.getCount());
-            metricIncrement.incrementMetric("rateLimiter.isAllowed", "rejected");
             return false;
         }
 

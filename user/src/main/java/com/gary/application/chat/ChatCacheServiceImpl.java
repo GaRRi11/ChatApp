@@ -1,6 +1,5 @@
 package com.gary.application.chat;
 
-import com.gary.common.metric.MetricIncrement;
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
 import com.gary.domain.repository.cache.chatMessage.ChatMessageCacheRepository;

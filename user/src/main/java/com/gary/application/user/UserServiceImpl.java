@@ -2,7 +2,6 @@ package com.gary.application.user;
 
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
-import com.gary.common.metric.MetricIncrement;
 import com.gary.common.time.TimeFormat;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.domain.model.user.User;
@@ -38,7 +37,6 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
     private final RefreshTokenService tokenService;
-    private final MetricIncrement metricIncrement;
     private final UserTransactionHelper userTransactionHelper;
 
 
@@ -52,7 +50,6 @@ public class UserServiceImpl implements UserService {
     public UserResponse register(UserRequest userRequest) {
 
         if (userTransactionHelper.findByUsername(userRequest.username()).isPresent()) {
-            metricIncrement.incrementMetric("user.register", "fail");
             throw new DuplicateResourceException("username exists");
         }
 
@@ -68,19 +65,15 @@ public class UserServiceImpl implements UserService {
 
         } catch (DataIntegrityViolationException e) {
 
-            log.error("Timestamp='{}' Registration failed for username='{}'. Cause: {}",
-                    TimeFormat.nowTimestamp(),
+            log.error("Registration failed for username='{}'. Cause: {}",
                     userRequest.username(),
                     e.toString());
-
-            metricIncrement.incrementMetric("user.register", "fail");
 
 
             throw new ServiceUnavailableException("Registration Unavailable, Try Again Later");
         }
 
 
-        metricIncrement.incrementMetric("user.register", "success");
         return UserResponse.fromEntity(user);
 
     }
@@ -106,19 +99,18 @@ public class UserServiceImpl implements UserService {
             isolation = Isolation.READ_COMMITTED)
     public LoginResponseDto login(UserRequest userRequest) {
 
-        User user = userTransactionHelper.findByUsername(userRequest.username())
-                .orElseThrow(() -> {
-                    metricIncrement.incrementMetric("user.login", "fail");
-                    log.warn("Timestamp='{}' Login failed: username '{}' not found",
-                            TimeFormat.nowTimestamp(),
-                            userRequest.username());
-                    return new UnauthorizedException("Invalid Credentials");
-                });
+        Optional<User> optUser = userTransactionHelper.findByUsername(userRequest.username());
+
+        if (optUser.isEmpty()) {
+            log.warn("Login failed: username '{}' not found",
+                    userRequest.username());
+            throw new UnauthorizedException("Invalid Credentials");
+        }
+
+        User user = optUser.get();
 
         if (!passwordEncoder.matches(userRequest.password(), user.getPassword())) {
-            metricIncrement.incrementMetric("user.login", "fail");
-            log.warn("Timestamp='{}' Login failed: invalid password for username '{}'",
-                    TimeFormat.nowTimestamp(),
+            log.warn("Login failed: invalid password for username '{}'",
                     userRequest.username());
             throw new UnauthorizedException("Invalid Credentials");
         }
@@ -130,7 +122,9 @@ public class UserServiceImpl implements UserService {
         String refreshToken;
 
         if (optionalToken.isEmpty()) {
+
             refreshToken = tokenService.create(user.getId()).getToken();
+
             return LoginResponseDto.builder()
                     .token(accessToken)
                     .refreshToken(refreshToken)
@@ -139,9 +133,10 @@ public class UserServiceImpl implements UserService {
 
         RefreshToken refreshTokenObject = optionalToken.get();
 
-        if (refreshTokenObject.getExpiryDate() < Instant.now().toEpochMilli()) {
+        if (!tokenService.verifyExpiration(refreshTokenObject)) {
 
             refreshToken = tokenService.create(user.getId()).getToken();
+
             return LoginResponseDto.builder()
                     .token(accessToken)
                     .refreshToken(refreshToken)
@@ -149,8 +144,6 @@ public class UserServiceImpl implements UserService {
         }
 
         refreshToken = refreshTokenObject.getToken();
-
-        metricIncrement.incrementMetric("user.login", "success");
 
         return LoginResponseDto.builder()
                 .token(accessToken)
@@ -175,7 +168,11 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("Refresh token is not in database!");
         }
 
-        RefreshToken refreshToken = tokenService.verifyExpiration(optionalToken.get());
+        RefreshToken refreshToken = optionalToken.get();
+
+        if (!tokenService.verifyExpiration(refreshToken)) {
+            throw new UnauthorizedException("Token Is Expired");
+        }
 
         UUID userId = refreshToken.getUserId();
 

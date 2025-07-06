@@ -16,5 +16,5 @@ public interface RefreshTokenService {
 
     Optional<RefreshToken> getTokenObject(String token);
 
-    RefreshToken verifyExpiration(RefreshToken token);
+    boolean verifyExpiration(RefreshToken token);
 }
