@@ -8,6 +8,7 @@ import com.gary.domain.service.chat.ChatPersistenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class ChatPersistenceServiceImpl implements ChatPersistenceService {
     @Override
     @LoggableAction("Save Chat Message")
     @Timed("chat.db.saveMessage.duration")
+    @Transactional(rollbackFor = Exception.class)
     public ChatMessage saveMessage(ChatMessage message) {
         return chatMessageRepository.save(message);
     }

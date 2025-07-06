@@ -41,10 +41,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    @Transactional(
-            propagation = Propagation.REQUIRED,
-            isolation = Isolation.SERIALIZABLE
-    )
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.SERIALIZABLE)
     @LoggableAction("User Register")
     @Timed("user.register.duration")
     public UserResponse register(UserRequest userRequest) {
@@ -59,19 +56,8 @@ public class UserServiceImpl implements UserService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        try {
 
-            user = userTransactionHelper.save(user);
-
-        } catch (DataIntegrityViolationException e) {
-
-            log.error("Registration failed for username='{}'. Cause: {}",
-                    userRequest.username(),
-                    e.toString());
-
-
-            throw new ServiceUnavailableException("Registration Unavailable, Try Again Later");
-        }
+        user = userTransactionHelper.save(user);
 
 
         return UserResponse.fromEntity(user);
@@ -80,11 +66,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    @Transactional(
-            readOnly = true,
-            propagation = Propagation.SUPPORTS,
-            isolation = Isolation.READ_COMMITTED
-    )
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public List<UserResponse> searchByUsername(String username) {
         return userTransactionHelper.findByUsername(username).stream()
                 .map(UserResponse::fromEntity)
@@ -93,10 +75,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @LoggableAction("User Login")
-    @Transactional(
-            readOnly = true,
-            propagation = Propagation.REQUIRED,
-            isolation = Isolation.READ_COMMITTED)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public LoginResponseDto login(UserRequest userRequest) {
 
         Optional<User> optUser = userTransactionHelper.findByUsername(userRequest.username());
@@ -188,20 +167,19 @@ public class UserServiceImpl implements UserService {
 
         return LoginResponseDto.builder()
                 .token(newAccessToken)
-                .refreshToken(null)
+                .refreshToken(refreshToken.getToken())
                 .build();
     }
 
 
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public Optional<User> findById(UUID id) {
         return userTransactionHelper.findById(id);
     }
 
     @Override
-    @Transactional(
-            readOnly = true,
-            propagation = Propagation.SUPPORTS)
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<User> findAllById(List<UUID> userIds) {
         return userTransactionHelper.findAllById(userIds);
     }

@@ -5,11 +5,9 @@ import com.gary.common.annotations.Timed;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.domain.repository.jpa.token.RefreshTokenRepository;
 import com.gary.domain.service.refreshToken.RefreshTokenService;
-import com.gary.web.exception.rest.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -35,6 +33,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public boolean verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate() < Instant.now().toEpochMilli()) {
             refreshTokenRepository.delete(token);
@@ -64,14 +63,14 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
 
     @Override
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void deleteByUser(UUID userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
 
 
     @Override
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @Timed("refreshToken.clearExpired.duration")
     public void clearExpiredTokens() {
         refreshTokenRepository.deleteExpiredTokens(Instant.now().toEpochMilli());

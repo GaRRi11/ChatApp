@@ -2,7 +2,6 @@ package com.gary.application.friendship;
 
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
-import com.gary.common.time.TimeFormat;
 import com.gary.domain.model.friendship.Friendship;
 import com.gary.domain.model.user.User;
 import com.gary.domain.repository.jpa.friendship.FriendshipRepository;

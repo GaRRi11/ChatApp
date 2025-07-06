@@ -74,7 +74,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     @Override
     @LoggableAction("Respond Friend Request")
     @Timed("friendRequest.respond.duration")
