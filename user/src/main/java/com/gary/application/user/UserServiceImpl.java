@@ -2,7 +2,6 @@ package com.gary.application.user;
 
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
-import com.gary.common.time.TimeFormat;
 import com.gary.domain.model.token.RefreshToken;
 import com.gary.domain.model.user.User;
 import com.gary.domain.service.refreshToken.RefreshTokenService;
@@ -12,11 +11,9 @@ import com.gary.web.dto.rest.loginResponse.LoginResponseDto;
 import com.gary.web.dto.rest.user.UserRequest;
 import com.gary.web.dto.rest.user.UserResponse;
 import com.gary.web.exception.rest.DuplicateResourceException;
-import com.gary.web.exception.rest.ServiceUnavailableException;
 import com.gary.web.exception.rest.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -137,7 +134,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional()
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @LoggableAction("User Refresh Token")
     public LoginResponseDto refreshToken(String token) {
 
