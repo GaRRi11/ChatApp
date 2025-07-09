@@ -50,6 +50,16 @@ public class UserTransactionHelper {
     }
 
 
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    @Transactional()
+    public void delete(UUID id) {
+        userRepository.deleteById(id);
+    }
+
+
 
 
 }

@@ -1,5 +1,6 @@
 package com.gary.application.user;
 
+import com.gary.admin.Role;
 import com.gary.common.annotations.LoggableAction;
 import com.gary.common.annotations.Timed;
 import com.gary.domain.model.token.RefreshToken;
@@ -50,6 +51,7 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .username(userRequest.username())
                 .password(passwordEncoder.encode(userRequest.password()))
+                .role(Role.USER)
                 .createdAt(LocalDateTime.now())
                 .build();
 
